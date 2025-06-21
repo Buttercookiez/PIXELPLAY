@@ -149,8 +149,65 @@
             transform: scale(0.95);
         }
 
+        /* New start screen styles (matches 2048 style) */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #instructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+            font-family: 'Courier New', monospace;
+        }
+
         /* Screen overlays with better animations */
-        #startScreen, #gameOverScreen {
+        #gameOverScreen {
             position: fixed;
             top: 0;
             left: 0;
@@ -165,130 +222,12 @@
             z-index: 200;
             backdrop-filter: blur(25px);
             animation: screenFadeIn 0.5s ease-out;
+            display: none;
         }
 
         @keyframes screenFadeIn {
             0% { opacity: 0; transform: scale(1.05); }
             100% { opacity: 1; transform: scale(1); }
-        }
-
-        #startScreen h1 {
-            font-size: 52px;
-            font-weight: 700;
-            margin-bottom: 30px;
-            letter-spacing: 12px;
-            color: #fff;
-            text-shadow: 
-                0 0 30px rgba(255,255,255,0.6),
-                0 0 60px rgba(255,255,255,0.3);
-            animation: titleGlow 3s ease-in-out infinite alternate;
-        }
-
-        @keyframes titleGlow {
-            0% { 
-                text-shadow: 
-                    0 0 30px rgba(255,255,255,0.6),
-                    0 0 60px rgba(255,255,255,0.3);
-            }
-            100% { 
-                text-shadow: 
-                    0 0 40px rgba(255,255,255,0.8),
-                    0 0 80px rgba(255,255,255,0.5);
-            }
-        }
-
-        #startScreen .subtitle {
-            font-size: 14px;
-            color: #777;
-            margin-bottom: 60px;
-            text-align: center;
-            line-height: 1.8;
-            letter-spacing: 1px;
-            max-width: 450px;
-            background: rgba(255,255,255,0.02);
-            padding: 25px;
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Enhanced button with better animations */
-        .btn {
-            background: transparent;
-            color: #fff;
-            border: 2px solid #444;
-            padding: 18px 36px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 3px;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            text-transform: uppercase;
-            backdrop-filter: blur(10px);
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), #fff);
-            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: -1;
-        }
-
-        .btn:hover {
-            color: #000;
-            border-color: #fff;
-            box-shadow: 
-                0 0 0 1px #fff,
-                0 0 40px rgba(255,255,255,0.3),
-                0 10px 30px rgba(0,0,0,0.3);
-            transform: translateY(-2px);
-        }
-
-        .btn:hover::before {
-            left: 0;
-        }
-
-        .btn:active {
-            transform: translateY(0) scale(0.98);
-        }
-
-        /* Game over screen */
-        #gameOverScreen h2 {
-            font-size: 40px;
-            font-weight: 700;
-            margin-bottom: 25px;
-            letter-spacing: 6px;
-            color: #fff;
-            animation: gameOverPulse 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes gameOverPulse {
-            0% { 
-                color: #fff;
-                text-shadow: 0 0 20px rgba(255,255,255,0.5);
-            }
-            100% { 
-                color: #ccc;
-                text-shadow: 0 0 30px rgba(255,255,255,0.7);
-            }
-        }
-
-        #finalScore {
-            font-size: 28px;
-            margin-bottom: 45px;
-            color: #888;
-            letter-spacing: 4px;
-            background: rgba(255,255,255,0.03);
-            padding: 20px 30px;
-            border: 1px solid rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
         }
 
         /* Enhanced feedback with better animations */
@@ -495,33 +434,14 @@
                 font-size: 14px;
             }
             
-            #startScreen h1 {
-                font-size: 36px;
-                letter-spacing: 6px;
-            }
-            
-            #startScreen .subtitle {
-                font-size: 12px;
-                padding: 20px;
-                margin: 0 20px 50px;
-            }
-            
-            .btn {
-                font-size: 12px;
-                padding: 16px 32px;
-                letter-spacing: 2px;
+            #gameTitle {
+                font-size: 2rem;
             }
         }
 
         @media (max-width: 480px) {
-            #startScreen h1 {
-                font-size: 28px;
-                letter-spacing: 4px;
-            }
-            
-            .btn {
-                font-size: 11px;
-                padding: 14px 28px;
+            #gameTitle {
+                font-size: 1.5rem;
             }
             
             .feedback {
@@ -537,17 +457,18 @@
             <div id="timer"></div>
         </div>
         
+        <!-- New start screen (matches 2048 style) -->
         <div id="startScreen">
-            <h1>PIXEL STRIKE</h1>
-            <div class="subtitle">
-                Strike the white pixels before they fade away<br>
-                Speed and difficulty increase with your score<br>
+            <h1 id="gameTitle">PIXEL STRIKE</h1>
+            <button id="startBtn">Start</button>
+            <div id="instructions">
+                Click or tap the white tiles before they fade away<br>
+                Speed increases with your score<br>
                 Miss three times and the game ends
             </div>
-            <button class="btn" id="startBtn">Begin Strike</button>
         </div>
         
-        <div id="gameOverScreen" style="display: none;">
+        <div id="gameOverScreen">
             <h2>STRIKE ENDED</h2>
             <div id="finalScore">00000</div>
             <button class="btn" id="restartBtn">Strike Again</button>
