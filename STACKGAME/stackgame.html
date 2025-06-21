@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stack Tower Enhanced</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            cursor: crosshair;
+        }
+        
+        /* New start screen styles */
+        #mainStartScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startGameBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startGameBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #gameInstructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+            font-family: 'Courier New', monospace;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        
+        #gameArea {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 70%, transparent 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+        
+        #score {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+        
+        #perfectCounter {
+            font-size: 10px;
+            opacity: 0.7;
+            letter-spacing: 1px;
+        }
+        
+        #instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            opacity: 0.5;
+            letter-spacing: 1px;
+            text-align: center;
+            z-index: 1000;
+            transition: opacity 0.3s;
+        }
+        
+        .block {
+            position: absolute;
+            background: #fff;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: inset 0 0 0 1px #fff;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .block-label {
+            font-size: 6px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #000;
+            opacity: 0.3;
+        }
+        
+        /* Block pattern variations */
+        .block-pattern-stripes {
+            background: repeating-linear-gradient(
+                90deg,
+                #fff 0px,
+                #fff 2px,
+                #ccc 2px,
+                #ccc 4px
+            );
+        }
+        
+        .block-pattern-dots {
+            background: #fff;
+            background-image: radial-gradient(circle at 50% 50%, #ccc 1px, transparent 1px);
+            background-size: 6px 6px;
+        }
+        
+        .block-pattern-checkers {
+            background: #fff;
+            background-image: 
+                linear-gradient(45deg, #ccc 25%, transparent 25%),
+                linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #ccc 75%),
+                linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 4px 4px;
+        }
+        
+        .block-pattern-noise {
+            background: #fff;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
+        }
+        
+        .moving-block {
+            z-index: 100;
+            box-shadow: 
+                inset 0 0 0 1px #fff,
+                0 0 10px rgba(255,255,255,0.3),
+                0 0 20px rgba(255,255,255,0.1);
+        }
+        
+        .perfect-block {
+            box-shadow: 
+                inset 0 0 0 2px #fff,
+                inset 0 0 0 4px #000,
+                inset 0 0 0 6px #fff,
+                0 0 15px rgba(255,255,255,0.5);
+        }
+        
+        .shard {
+            position: absolute;
+            background: #fff;
+            pointer-events: none;
+            z-index: 50;
+        }
+        
+        .debris {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #fff;
+            pointer-events: none;
+            z-index: 45;
+        }
+        
+        #perfectIndicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: #fff;
+            opacity: 0;
+            z-index: 500;
+            pointer-events: none;
+            text-shadow: 0 0 10px rgba(255,255,255,0.8);
+        }
+        
+        #startScreen, #gameOverScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .screen-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        }
+        
+        .screen-subtitle {
+            font-size: 10px;
+            margin-bottom: 40px;
+            text-align: center;
+            line-height: 18px;
+            opacity: 0.8;
+            letter-spacing: 1px;
+            max-width: 300px;
+        }
+        
+        .button {
+            background: transparent;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 15px 40px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: crosshair;
+            letter-spacing: 3px;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .button:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+        
+        .button:hover:before {
+            left: 0;
+        }
+        
+        .button:hover {
+            color: #000;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+        
+        .button:active {
+            transform: scale(0.98);
+        }
+        
+        #finalScore {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+        
+        .pulse {
+            animation: pulse 0.3s ease;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .shake {
+            animation: shake 0.5s ease;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .perfect-flash {
+            animation: perfectFlash 0.5s ease;
+        }
+        
+        @keyframes perfectFlash {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        
+        @keyframes shardFall {
+            0% {
+                opacity: 1;
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(200px) rotate(360deg);
+            }
+        }
+        
+        @keyframes debrisFall {
+            0% {
+                opacity: 1;
+                transform: translateY(0) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(150px) rotate(180deg);
+            }
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #fff;
+            pointer-events: none;
+            z-index: 60;
+        }
+        
+        @keyframes particle {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0) translateY(50px);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            #ui {
+                padding: 0 20px;
+                height: 70px;
+            }
+            
+            #score {
+                font-size: 12px;
+            }
+            
+            #perfectCounter {
+                font-size: 9px;
+            }
+            
+            .screen-title {
+                font-size: 18px;
+                letter-spacing: 3px;
+            }
+            
+            .screen-subtitle {
+                font-size: 9px;
+                line-height: 16px;
+            }
+            
+            .button {
+                font-size: 10px;
+                padding: 12px 30px;
+                letter-spacing: 2px;
+            }
+            
+            #instructions {
+                font-size: 7px;
+                bottom: 15px;
+            }
+            
+            #perfectIndicator {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- New main start screen -->
+    <div id="mainStartScreen">
+        <h1 id="gameTitle">STACK TOWER</h1>
+        <button id="startGameBtn">Start</button>
+        <div id="gameInstructions">
+            TAP TO DROP BLOCKS<br>
+            PERFECT ALIGNMENT GIVES BONUS<br>
+            STACK AS HIGH AS POSSIBLE
+        </div>
+    </div>
+
+    <div id="gameContainer">
+        <div id="ui">
+            <div>
+                <div id="score">000</div>
+                <div id="perfectCounter">PERFECT: 0</div>
+            </div>
+            <div id="instructions">TAP TO DROP</div>
+        </div>
+        
+        <div id="gameArea"></div>
+        
+        <div id="perfectIndicator">PERFECT!</div>
+        
+        <div id="startScreen" style="display: none;">
+            <h1 class="screen-title">STACK</h1>
+            <div class="screen-subtitle">
+                TAP TO DROP BLOCKS<br>
+                PERFECT ALIGNMENT GIVES BONUS<br>
+                STACK AS HIGH AS POSSIBLE
+            </div>
+            <button class="button" onclick="startGame()">START</button>
+        </div>
+        
+        <div id="gameOverScreen" style="display: none;">
+            <h1 class="screen-title">GAME OVER</h1>
+            <div id="finalScore">SCORE: 000</div>
+            <button class="button" onclick="startGame()">RESTART</button>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio API for sound
+        class SoundEngine {
+            constructor() {
+                this.audioContext = null;
+                this.initialized = false;
+            }
+            
+            async init() {
+                if (this.initialized) return;
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.initialized = true;
+                } catch (e) {
+                    console.log('Audio not supported');
+                }
+            }
+            
+            playTone(frequency, duration, type = 'sine') {
+                if (!this.audioContext) return;
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+            
+            playDrop() {
+                this.playTone(220, 0.1, 'square');
+            }
+            
+            playPerfect() {
+                this.playTone(440, 0.15, 'sine');
+                setTimeout(() => this.playTone(550, 0.1, 'sine'), 50);
+            }
+            
+            playGameOver() {
+                this.playTone(110, 0.5, 'sawtooth');
+            }
+            
+            playCut() {
+                this.playTone(180, 0.15, 'square');
+            }
+            
+            playMiss() {
+                this.playTone(150, 0.3, 'sawtooth');
+            }
+        }
+
+        class StackTowerGame {
+            constructor() {
+                this.gameArea = document.getElementById('gameArea');
+                this.scoreElement = document.getElementById('score');
+                this.perfectElement = document.getElementById('perfectCounter');
+                this.instructionsElement = document.getElementById('instructions');
+                this.startScreen = document.getElementById('startScreen');
+                this.gameOverScreen = document.getElementById('gameOverScreen');
+                this.finalScoreElement = document.getElementById('finalScore');
+                this.perfectIndicator = document.getElementById('perfectIndicator');
+                this.mainStartScreen = document.getElementById('mainStartScreen');
+                this.startGameBtn = document.getElementById('startGameBtn');
+                
+                this.sound = new SoundEngine();
+                this.patterns = ['', 'stripes', 'dots', 'checkers', 'noise'];
+                this.reset();
+                this.setupControls();
+            }
+            
+            reset() {
+                this.score = 0;
+                this.perfectStreak = 0;
+                this.blocks = [];
+                this.currentBlock = null;
+                this.gameRunning = false;
+                this.blockWidth = Math.min(window.innerWidth * 0.5, 250);
+                this.blockHeight = 25;
+                this.speed = 3;
+                this.direction = 1;
+                this.baseSpeed = 3;
+                this.animationId = null;
+                this.alternateDirection = false;
+                
+                // Clear game area
+                this.gameArea.innerHTML = '';
+                this.updateScore();
+                this.updatePerfect();
+                this.showInstructions();
+            }
+            
+            setupControls() {
+                document.addEventListener('click', (e) => this.handleInput(e));
+                document.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.handleInput(e);
+                });
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        this.handleInput(e);
+                    }
+                });
+
+                // Add main start button listener
+                this.startGameBtn.addEventListener('click', () => {
+                    this.mainStartScreen.style.display = 'none';
+                    this.start();
+                });
+            }
+            
+            handleInput(e) {
+                if (!this.gameRunning) return;
+                if (e.target.classList.contains('button')) return;
+                
+                this.dropBlock();
+            }
+            
+            async start() {
+                await this.sound.init();
+                this.reset();
+                this.gameRunning = true;
+                this.startScreen.style.display = 'none';
+                this.gameOverScreen.style.display = 'none';
+                
+                this.createBaseBlock();
+                this.createMovingBlock();
+                this.gameLoop();
+                this.hideInstructions();
+            }
+            
+            getBlockPattern(index) {
+                const pattern = this.patterns[index % this.patterns.length];
+                return pattern ? `block-pattern-${pattern}` : '';
+            }
+            
+            createBaseBlock() {
+                const block = document.createElement('div');
+                block.className = `block ${this.getBlockPattern(0)}`;
+                block.style.width = this.blockWidth + 'px';
+                block.style.height = this.blockHeight + 'px';
+                block.style.left = (window.innerWidth - this.blockWidth) / 2 + 'px';
+                block.style.bottom = '0px';
+                
+                // Add block label
+                const label = document.createElement('div');
+                label.className = 'block-label';
+                label.textContent = '▀ 01 ▀';
+                block.appendChild(label);
+                
+                this.gameArea.appendChild(block);
+                this.blocks.push({
+                    element: block,
+                    x: (window.innerWidth - this.blockWidth) / 2,
+                    width: this.blockWidth,
+                    bottom: 0
+                });
+            }
+            
+            createMovingBlock() {
+                const block = document.createElement('div');
+                const patternClass = this.getBlockPattern(this.blocks.length);
+                block.className = `block moving-block ${patternClass}`;
+                block.style.width = this.blockWidth + 'px';
+                block.style.height = this.blockHeight + 'px';
+                block.style.bottom = (this.blocks.length * this.blockHeight) + 'px';
+                
+                // Add block label
+                const label = document.createElement('div');
+                label.className = 'block-label';
+                label.textContent = `▀ ${String(this.blocks.length + 1).padStart(2, '0')} ▀`;
+                block.appendChild(label);
+                
+                // Alternate starting position
+                if (this.alternateDirection) {
+                    block.style.left = (window.innerWidth - this.blockWidth) + 'px';
+                    this.currentBlock = {
+                        element: block,
+                        x: window.innerWidth - this.blockWidth,
+                        width: this.blockWidth,
+                        bottom: this.blocks.length * this.blockHeight
+                    };
+                    this.direction = -1;
+                } else {
+                    block.style.left = '0px';
+                    this.currentBlock = {
+                        element: block,
+                        x: 0,
+                        width: this.blockWidth,
+                        bottom: this.blocks.length * this.blockHeight
+                    };
+                    this.direction = 1;
+                }
+                
+                this.alternateDirection = !this.alternateDirection;
+                this.gameArea.appendChild(block);
+            }
+            
+            gameLoop() {
+                if (!this.gameRunning) return;
+                
+                if (this.currentBlock) {
+                    this.currentBlock.x += this.speed * this.direction;
+                    
+                    // Bounce off walls
+                    if (this.currentBlock.x <= 0) {
+                        this.currentBlock.x = 0;
+                        this.direction = 1;
+                    } else if (this.currentBlock.x + this.currentBlock.width >= window.innerWidth) {
+                        this.currentBlock.x = window.innerWidth - this.currentBlock.width;
+                        this.direction = -1;
+                    }
+                    
+                    this.currentBlock.element.style.left = this.currentBlock.x + 'px';
+                }
+                
+                this.animationId = requestAnimationFrame(() => this.gameLoop());
+            }
+            
+            createDebris(x, width, bottom, direction) {
+                const debrisCount = Math.min(Math.max(Math.floor(width / 4), 2), 8);
+                
+                for (let i = 0; i < debrisCount; i++) {
+                    const debris = document.createElement('div');
+                    debris.className = 'debris';
+                    
+                    debris.style.left = (x + Math.random() * width) + 'px';
+                    debris.style.bottom = bottom + 'px';
+                    
+                    this.gameArea.appendChild(debris);
+                    
+                    const fallDuration = 800 + Math.random() * 400;
+                    const horizontalDrift = direction * (10 + Math.random() * 20);
+                    
+                    debris.animate([
+                        {
+                            transform: 'translateY(0) translateX(0) rotate(0deg)',
+                            opacity: 1
+                        },
+                        {
+                            transform: `translateY(150px) translateX(${horizontalDrift}px) rotate(180deg)`,
+                            opacity: 0
+                        }
+                    ], {
+                        duration: fallDuration,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    }).addEventListener('finish', () => {
+                        debris.remove();
+                    });
+                }
+            }
+            
+            createShards(x, width, bottom, cutLeft, cutRight) {
+                if (cutLeft > 0) {
+                    this.createShardPieces(x, cutLeft, bottom, -1);
+                    this.createDebris(x, cutLeft, bottom, -1);
+                }
+                if (cutRight > 0) {
+                    this.createShardPieces(x + width - cutRight, cutRight, bottom, 1);
+                    this.createDebris(x + width - cutRight, cutRight, bottom, 1);
+                }
+                this.sound.playCut();
+            }
+            
+            createShardPieces(x, width, bottom, direction) {
+                const shardCount = Math.min(Math.max(Math.floor(width / 8), 3), 12);
+                
+                for (let i = 0; i < shardCount; i++) {
+                    const shard = document.createElement('div');
+                    shard.className = 'shard';
+                    
+                    const shardWidth = Math.random() * 6 + 2;
+                    const shardHeight = Math.random() * 8 + 4;
+                    
+                    shard.style.width = shardWidth + 'px';
+                    shard.style.height = shardHeight + 'px';
+                    shard.style.left = (x + Math.random() * width) + 'px';
+                    shard.style.bottom = bottom + 'px';
+                    
+                    this.gameArea.appendChild(shard);
+                    
+                    const fallDuration = 1000 + Math.random() * 500;
+                    const horizontalDrift = direction * (20 + Math.random() * 30);
+                    
+                    shard.animate([
+                        {
+                            transform: 'translateY(0) translateX(0) rotate(0deg)',
+                            opacity: 1
+                        },
+                        {
+                            transform: `translateY(300px) translateX(${horizontalDrift}px) rotate(${Math.random() * 720}deg)`,
+                            opacity: 0
+                        }
+                    ], {
+                        duration: fallDuration,
+                        easing: 'cubic-bezier(0.4, 0, 0.6, 1)'
+                    }).addEventListener('finish', () => {
+                        shard.remove();
+                    });
+                }
+                
+                this.createParticles(x, width, bottom);
+            }
+            
+            createParticles(x, width, bottom) {
+                const particleCount = Math.floor(width / 5);
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = (x + Math.random() * width) + 'px';
+                    particle.style.bottom = bottom + 'px';
+                    
+                    this.gameArea.appendChild(particle);
+                    
+                    particle.animate([
+                        { opacity: 1, transform: 'scale(1) translateY(0)' },
+                        { opacity: 0, transform: 'scale(0) translateY(50px)' }
+                    ], {
+                        duration: 800,
+                        easing: 'ease-out'
+                    }).addEventListener('finish', () => {
+                        particle.remove();
+                    });
+                }
+            }
+            
+            showPerfectIndicator() {
+                this.perfectIndicator.classList.add('perfect-flash');
+                setTimeout(() => {
+                    this.perfectIndicator.classList.remove('perfect-flash');
+                }, 500);
+            }
+            
+            dropBlock() {
+                if (!this.currentBlock) return;
+                
+                const lastBlock = this.blocks[this.blocks.length - 1];
+                const currentX = this.currentBlock.x;
+                const currentWidth = this.currentBlock.width;
+                const lastX = lastBlock.x;
+                const lastWidth = lastBlock.width;
+                
+                // Calculate overlap
+                const leftEdge = Math.max(currentX, lastX);
+                const rightEdge = Math.min(currentX + currentWidth, lastX + lastWidth);
+                const overlapWidth = rightEdge - leftEdge;
+                
+                if (overlapWidth <= 0) {
+                    this.gameOver();
+                    return;
+                }
+                
+                // Calculate cut pieces
+                const cutLeft = Math.max(0, lastX - currentX);
+                const cutRight = Math.max(0, (currentX + currentWidth) - (lastX + lastWidth));
+                
+                // Check if perfect drop (more lenient threshold)
+                const isPerfect = Math.abs(currentX - lastX) < 5 && Math.abs(currentWidth - lastWidth) < 5;
+                
+                if (isPerfect) {
+                    this.perfectStreak++;
+                    this.score += 1 + Math.floor(this.perfectStreak / 3);
+                    this.sound.playPerfect();
+                    this.currentBlock.element.classList.add('pulse', 'perfect-block');
+                    this.showPerfectIndicator();
+                } else {
+                    this.perfectStreak = 0;
+                    this.score++;
+                    this.sound.playDrop();
+                    
+                    // Create shards and debris if there was cutting
+                    if (cutLeft > 0 || cutRight > 0) {
+                        this.createShards(currentX, currentWidth, this.currentBlock.bottom, cutLeft, cutRight);
+                        // Add shake effect to game area
+                        this.gameArea.classList.add('shake');
+                        setTimeout(() => {
+                            this.gameArea.classList.remove('shake');
+                        }, 500);
+                    }
+                }
+                
+                // Update block to show only overlapping part
+                this.currentBlock.element.style.left = leftEdge + 'px';
+                this.currentBlock.element.style.width = overlapWidth + 'px';
+                this.currentBlock.element.classList.remove('moving-block');
+                
+                // Add to blocks array
+                this.blocks.push({
+                    element: this.currentBlock.element,
+                    x: leftEdge,
+                    width: overlapWidth,
+                    bottom: this.currentBlock.bottom
+                });
+                
+                // Update for next block
+                this.blockWidth = overlapWidth;
+                this.currentBlock = null;
+                
+                // Increase speed
+                if (this.blocks.length % 4 === 0) {
+                    this.speed = Math.min(this.baseSpeed + (this.blocks.length / 4) * 0.7, 10);
+                }
+                
+                this.updateScore();
+                this.updatePerfect();
+                
+                // Check if blocks are getting too narrow
+                if (this.blockWidth < 20) {
+                    this.gameOver();
+                    return;
+                }
+                
+                // Create next block
+                setTimeout(() => {
+                    if (this.gameRunning) {
+                        this.createMovingBlock();
+                    }
+                }, 150);
+            }
+            
+            updateScore() {
+                this.scoreElement.textContent = String(this.score).padStart(3, '0');
+            }
+            
+            updatePerfect() {
+                this.perfectElement.textContent = `PERFECT: ${this.perfectStreak}`;
+                this.perfectElement.style.opacity = this.perfectStreak > 0 ? '1' : '0.7';
+            }
+            
+            showInstructions() {
+                this.instructionsElement.style.opacity = '0.5';
+            }
+            
+            hideInstructions() {
+                this.instructionsElement.style.opacity = '0';
+            }
+            
+            gameOver() {
+                this.gameRunning = false;
+                this.sound.playGameOver();
+                
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+                
+                this.finalScoreElement.textContent = `SCORE: ${String(this.score).padStart(3, '0')}`;
+                
+                // Add shake effect to remaining blocks
+                this.blocks.forEach(block => {
+                    block.element.classList.add('shake');
+                });
+                
+                setTimeout(() => {
+                    this.gameOverScreen.style.display = 'flex';
+                }, 500);
+                
+                if (this.currentBlock) {
+                    this.currentBlock.element.remove();
+                    this.currentBlock = null;
+                }
+                
+                this.showInstructions();
+            }
+        }
+        
+        // Initialize game
+        let game = new StackTowerGame();
+        
+        function startGame() {
+            game.start();
+        }
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (game.gameRunning) {
+                // Pause the game briefly during resize
+                const wasRunning = game.gameRunning;
+                game.gameRunning = false;
+                
+                setTimeout(() => {
+                    // Recalculate positions after resize
+                    const newWidth = window.innerWidth;
+                    const oldWidth = game.gameArea.offsetWidth || window.innerWidth;
+                    const scale = newWidth / oldWidth;
+                    
+                    // Update all block positions
+                    game.blocks.forEach(block => {
+                        const newX = block.x * scale;
+                        const newWidth = block.width * scale;
+                        block.x = newX;
+                        block.width = newWidth;
+                        block.element.style.left = newX + 'px';
+                        block.element.style.width = newWidth + 'px';
+                    });
+                    
+                    // Update current moving block
+                    if (game.currentBlock) {
+                        const newX = game.currentBlock.x * scale;
+                        const newWidth = game.currentBlock.width * scale;
+                        game.currentBlock.x = newX;
+                        game.currentBlock.width = newWidth;
+                        game.currentBlock.element.style.left = newX + 'px';
+                        game.currentBlock.element.style.width = newWidth + 'px';
+                    }
+                    
+                    // Update block width for future blocks
+                    game.blockWidth = game.blockWidth * scale;
+                    
+                    // Resume game
+                    if (wasRunning) {
+                        game.gameRunning = true;
+                        game.gameLoop();
+                    }
+                }, 100);
+            }
+        });
+        
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+        
+        // Handle visibility change (pause when tab not active)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && game.gameRunning) {
+                game.gameRunning = false;
+                if (game.animationId) {
+                    cancelAnimationFrame(game.animationId);
+                }
+            } else if (!document.hidden && game.blocks.length > 0 && game.currentBlock) {
+                game.gameRunning = true;
+                game.gameLoop();
+            }
+        });
+        
+        // Auto-start sound context on first user interaction
+        document.addEventListener('click', () => {
+            if (game.sound.audioContext && game.sound.audioContext.state === 'suspended') {
+                game.sound.audioContext.resume();
+            }
+        }, { once: true });
+        
+        // Debug mode (optional - remove in production)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'g' && e.ctrlKey) {
+                console.log('Game state:', {
+                    score: game.score,
+                    blocks: game.blocks.length,
+                    speed: game.speed,
+                    blockWidth: game.blockWidth,
+                    perfectStreak: game.perfectStreak
+                });
+            }
+        });
+    </script>
+</body>
+</html>

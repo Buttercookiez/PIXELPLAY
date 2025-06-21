@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beheading Quest: The Pixel Trials</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #0a0a0a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255,255,255,0.02) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,0.02) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255,255,255,0.01) 2px,
+                rgba(255,255,255,0.01) 4px
+            );
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* New Start Screen Styles */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.3s ease;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #instructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+            max-width: 400px;
+        }
+
+        .game-container {
+            background: #111;
+            border: 2px solid #333;
+            max-width: 700px;
+            width: 95%;
+            position: relative;
+            overflow: hidden;
+            display: none; /* Initially hidden */
+        }
+
+        .game-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, 
+                transparent 49%, 
+                rgba(255,255,255,0.03) 50%, 
+                transparent 51%
+            );
+            pointer-events: none;
+        }
+
+        .header {
+            background: #000;
+            border-bottom: 1px solid #333;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #fff, transparent);
+            opacity: 0.3;
+        }
+
+        h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 10px;
+            color: #666;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .main-game {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 400px;
+        }
+
+        .execution-area {
+            background: #000;
+            border-right: 1px solid #333;
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .execution-display {
+            width: 200px;
+            height: 250px;
+            position: relative;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.2;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #executionArt {
+            white-space: pre;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.1;
+            color: #fff;
+            text-align: center;
+            letter-spacing: 0;
+        }
+
+        .scaffold {
+            position: absolute;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .game-info {
+            padding: 30px;
+            background: #111;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .difficulty-bar {
+            display: flex;
+            gap: 1px;
+            margin-bottom: 20px;
+            background: #222;
+            border: 1px solid #333;
+        }
+
+        .diff-btn {
+            flex: 1;
+            background: #222;
+            border: none;
+            color: #666;
+            padding: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .diff-btn.active {
+            background: #fff;
+            color: #000;
+        }
+
+        .diff-btn:hover:not(.active) {
+            background: #333;
+            color: #fff;
+        }
+
+        .word-section {
+            margin-bottom: 25px;
+        }
+
+        .category-tag {
+            font-size: 9px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .word-display {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: 8px;
+            color: #fff;
+            margin-bottom: 15px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+            font-size: 10px;
+        }
+
+        .stat-item {
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .wrong-letters {
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            margin-bottom: 20px;
+            min-height: 40px;
+        }
+
+        .wrong-label {
+            font-size: 9px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .wrong-list {
+            font-size: 12px;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+
+        .keyboard {
+            background: #000;
+            border-top: 1px solid #333;
+            padding: 25px;
+        }
+
+        .keyboard-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 3px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .key {
+            background: #222;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 12px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+            position: relative;
+        }
+
+        .key:hover:not(.used) {
+            background: #fff;
+            color: #000;
+            transform: translateY(-1px);
+        }
+
+        .key.used {
+            background: #111;
+            color: #444;
+            cursor: not-allowed;
+        }
+
+        .key.correct {
+            background: #fff;
+            color: #000;
+        }
+
+        .key.incorrect {
+            background: #333;
+            color: #666;
+        }
+
+        .controls {
+            background: #111;
+            border-top: 1px solid #333;
+            padding: 20px;
+            display: flex;
+            gap: 1px;
+        }
+
+        .ctrl-btn {
+            flex: 1;
+            background: #222;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .ctrl-btn:hover {
+            background: #fff;
+            color: #000;
+        }
+
+        .message-bar {
+            background: #000;
+            border-top: 1px solid #333;
+            padding: 15px 25px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .win-message {
+            color: #fff;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .lose-message {
+            color: #666;
+            animation: flicker 0.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .pixel-art {
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        .glitch {
+            animation: glitch 2s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            10% { transform: translate(-1px, -1px); }
+            20% { transform: translate(1px, 1px); }
+            30% { transform: translate(-1px, 1px); }
+            40% { transform: translate(1px, -1px); }
+            50% { transform: translate(-1px, -1px); }
+            60% { transform: translate(1px, 1px); }
+            70% { transform: translate(-1px, 1px); }
+            80% { transform: translate(1px, -1px); }
+            90% { transform: translate(-1px, -1px); }
+        }
+
+        @media (max-width: 768px) {
+            #gameTitle {
+                font-size: 2rem;
+                letter-spacing: 0.3rem;
+            }
+            
+            .main-game {
+                grid-template-columns: 1fr;
+            }
+            
+            .execution-area {
+                border-right: none;
+                border-bottom: 1px solid #333;
+                min-height: 200px;
+            }
+            
+            .execution-display {
+                width: 150px;
+                height: 180px;
+                font-size: 16px;
+            }
+            
+            .keyboard-grid {
+                grid-template-columns: repeat(7, 1fr);
+            }
+            
+            h1 {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="startScreen">
+        <h1 id="gameTitle">BEHEADING QUEST</h1>
+        <button id="startBtn">Start</button>
+        <div id="instructions">
+            Guess letters to reveal the hidden word<br>
+            Wrong guesses bring the execution closer<br>
+            Save the prisoner before it's too late
+        </div>
+    </div>
+    
+    <div class="scanlines"></div>
+    
+    <div class="game-container" id="gameContainer">
+        <div class="header">
+            <h1>Beheading Quest</h1>
+            <div class="subtitle">The Pixel Trials</div>
+        </div>
+
+        <div class="difficulty-bar">
+            <button class="diff-btn active" data-difficulty="easy">Easy</button>
+            <button class="diff-btn" data-difficulty="medium">Medium</button>
+            <button class="diff-btn" data-difficulty="hard">Hard</button>
+        </div>
+
+        <div class="main-game">
+            <div class="execution-area">
+                <div class="execution-display pixel-art" id="executionDisplay">
+                    <div id="executionArt"></div>
+                </div>
+            </div>
+
+            <div class="game-info">
+                <div class="word-section">
+                    <div class="category-tag" id="categoryTag">Category: Animals</div>
+                    <div class="word-display" id="wordDisplay">_ _ _ _ _</div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Wrong</div>
+                        <div class="stat-value" id="wrongCount">0</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Remaining</div>
+                        <div class="stat-value" id="remainingCount">7</div>
+                    </div>
+                </div>
+
+                <div class="wrong-letters">
+                    <div class="wrong-label">Incorrect Letters</div>
+                    <div class="wrong-list" id="wrongLetters">—</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="keyboard">
+            <div class="keyboard-grid" id="keyboard"></div>
+        </div>
+
+        <div class="controls">
+            <button class="ctrl-btn" onclick="newGame()">New Game</button>
+            <button class="ctrl-btn" onclick="getHint()" id="hintBtn">Hint (3)</button>
+            <button class="ctrl-btn" onclick="toggleSound()" id="soundBtn">Sound: On</button>
+        </div>
+
+        <div class="message-bar" id="messageBar"></div>
+    </div>
+
+    <script>
+        const executionStages = [
+            `  +=========+
+  |         |
+  |          
+  |      O   
+  |     /|\\  
+  |     / \\  
+  |          
+==+==========`,
+            `  +=========+
+  |         |
+  |      ---
+  |      O   
+  |     /|\\  
+  |     / \\  
+  |          
+==+==========`,
+            `  +=========+
+  |         |
+  |     /---
+  |      O   
+  |     /|\\  
+  |     / \\  
+  |          
+==+==========`,
+            `  +=========+
+  |         |
+  |    /----
+  |      O   
+  |     /|\\  
+  |     / \\  
+  |          
+==+==========`,
+            `  +=========+
+  |         |
+  |   /-----
+  |      O   
+  |     /|\\  
+  |     / \\  
+  |          
+==+==========`,
+            `  +=========+
+  |         |
+  |  /------
+  |      O   
+  |     /|\\  
+  |     / \\  
+  |          
+==+==========`,
+            `  +=========+
+  |         |
+  | /-------
+  |      O   
+  |     /|\\  
+  |     / \\  
+  |          
+==+==========`,
+            `  +=========+
+  |         |
+  | \\-------
+  |      X   
+  |     /|\\  
+  |     / \\  
+  |      O  
+==+==========`
+        ];
+
+        const wordBanks = {
+            easy: {
+                animals: [
+                    'cake', 'pizza', 'apple', 'bread', 'milk', 'rice', 'meat', 'cheese', 'butter', 'egg',
+                    'soup', 'noodles', 'toast', 'corn', 'beef', 'pork', 'fish', 'chips', 'cookie', 'icecream',
+                    'jam', 'yogurt', 'banana', 'mango', 'orange', 'lemon', 'grapes', 'melon', 'berry', 'donut',
+                    'burger', 'hotdog', 'steak', 'candy', 'sugar', 'salt', 'pepper', 'onion', 'carrot', 'tomato',
+                    'potato', 'lettuce', 'spinach', 'broccoli', 'ketchup', 'mayo', 'mustard', 'peanut', 'walnut', 'almond',
+                    'hazelnut', 'breadstick', 'pickle', 'olive', 'sausage', 'lasagna', 'ramen', 'taco', 'burrito', 'salsa',
+                    'nacho', 'guacamole', 'salad', 'pasta', 'spaghetti', 'fajita', 'dimsum', 'dumpling', 'springroll', 'sushi',
+                    'riceball', 'mochi', 'jelly', 'pudding', 'brownie', 'cupcake', 'pancake', 'waffle', 'honey', 'milkshake',
+                    'smoothie', 'water', 'juice', 'cola', 'soda', 'tea', 'coffee', 'latte', 'espresso', 'cocoa',
+                    'cereal', 'muffin', 'gravy', 'eggs', 'tuna', 'lobster', 'clams', 'spinach', 'chili', 'toast'
+                    ],
+                food: [
+                    'cake', 'pizza', 'apple', 'bread', 'milk', 'rice', 'meat', 'cheese', 'butter', 'egg',
+                    'soup', 'noodles', 'toast', 'corn', 'beef', 'pork', 'fish', 'chips', 'cookie', 'icecream',
+                    'jam', 'yogurt', 'banana', 'mango', 'orange', 'lemon', 'grapes', 'melon', 'berry', 'donut',
+                    'burger', 'hotdog', 'steak', 'candy', 'sugar', 'salt', 'pepper', 'onion', 'carrot', 'tomato',
+                    'potato', 'lettuce', 'spinach', 'broccoli', 'ketchup', 'mayo', 'mustard', 'peanut', 'walnut', 'almond',
+                    'hazelnut', 'breadstick', 'pickle', 'olive', 'sausage', 'lasagna', 'ramen', 'taco', 'burrito', 'salsa',
+                    'nacho', 'guacamole', 'salad', 'pasta', 'spaghetti', 'fajita', 'dimsum', 'dumpling', 'springroll', 'sushi',
+                    'riceball', 'mochi', 'jelly', 'pudding', 'brownie', 'cupcake', 'pancake', 'waffle', 'honey', 'milkshake',
+                    'smoothie', 'water', 'juice', 'cola', 'soda', 'tea', 'coffee', 'latte', 'espresso', 'cocoa',
+                    'cereal', 'muffin', 'gravy', 'eggs', 'tuna', 'lobster', 'clams', 'spinach', 'chili', 'toast'
+                    ]
+                    ,
+                colors: [
+                    'red', 'blue', 'green', 'pink', 'gold', 'black', 'white', 'yellow', 'orange', 'purple',
+                    'brown', 'gray', 'cyan', 'magenta', 'lime', 'navy', 'teal', 'maroon', 'olive', 'coral',
+                    'peach', 'mint', 'lavender', 'beige', 'cream', 'indigo', 'turquoise', 'violet', 'tan', 'amber',
+                    'silver', 'charcoal', 'ruby', 'sapphire', 'jade', 'rose', 'plum', 'salmon', 'mustard', 'bronze',
+                    'apricot', 'cherry', 'sky', 'aqua', 'ivory', 'smoke', 'dust', 'wine', 'sand', 'ochre',
+                    'pearl', 'chocolate', 'mahogany', 'copper', 'steel', 'lead', 'ash', 'fog', 'frost', 'seafoam',
+                    'sunset', 'midnight', 'orchid', 'blush', 'mintcream', 'papaya', 'melon', 'periwinkle', 'azure', 'lemon',
+                    'ice', 'cloud', 'flame', 'shadow', 'ink', 'eggplant', 'bubblegum', 'moss', 'lava', 'fire',
+                    'ocean', 'storm', 'sunshine', 'honey', 'rust', 'coconut', 'pine', 'leaf', 'forest', 'desert',
+                    'snow', 'glacier', 'coal', 'stone', 'wheat', 'night', 'moon', 'dusk', 'opal', 'zinc'
+                    ]
+            },
+            medium: {
+                animals: [
+                    'tiger', 'whale', 'eagle', 'shark', 'panda', 'zebra', 'horse', 'falcon', 'panther', 'jaguar',
+                    'rhino', 'lynx', 'leopard', 'vulture', 'cobra', 'lizard', 'gibbon', 'boar', 'stingray', 'sealion',
+                    'bobcat', 'chameleon', 'giraffe', 'gazelle', 'hyena', 'ibex', 'koala', 'manatee', 'moose', 'narwhal',
+                    'ocelot', 'orangutan', 'otter', 'platypus', 'porcupine', 'reindeer', 'salamander', 'scorpion', 'tapir', 'toucan',
+                    'warthog', 'wolverine', 'yak', 'antelope', 'armadillo', 'badger', 'barnowl', 'caracal', 'cassowary', 'cockatoo',
+                    'crane', 'coyote', 'dingo', 'emu', 'fennec', 'flamingo', 'gecko', 'gnu', 'hedgehog', 'jackal',
+                    'kiwi', 'kudu', 'lemur', 'lory', 'macaw', 'marten', 'meerkat', 'mink', 'mongoose', 'muskox',
+                    'numbat', 'opossum', 'peacock', 'porpoise', 'python', 'quokka', 'raven', 'redpanda', 'sifaka', 'skua',
+                    'sloth', 'springbok', 'stoat', 'swan', 'tamarin', 'tarsier', 'tern', 'thrush', 'urial', 'vicuna',
+                    'viper', 'wallaby', 'wildcat', 'wombat', 'zorilla', 'shrew', 'grouse', 'shrike', 'ibis', 'labrador'
+                    ]
+                    ,
+                fantasy: [
+                    'wizard', 'dragon', 'castle', 'magic', 'quest', 'sword', 'knight', 'spell', 'potion', 'witch',
+                    'dwarf', 'elf', 'orc', 'goblin', 'troll', 'giant', 'fairy', 'mermaid', 'phoenix', 'griffin',
+                    'chimera', 'basilisk', 'hydra', 'unicorn', 'werewolf', 'vampire', 'ghost', 'zombie', 'necromancer', 'sorcerer',
+                    'witcher', 'warlock', 'ranger', 'bard', 'cleric', 'paladin', 'shaman', 'druid', 'monk', 'summon',
+                    'beast', 'elemental', 'lightning', 'fireball', 'teleport', 'illusion', 'rune', 'enchant', 'curse', 'blessing',
+                    'familiar', 'amulet', 'crystal', 'scroll', 'cauldron', 'artifact', 'myth', 'realm', 'portal', 'shadow',
+                    'ethereal', 'talisman', 'levitate', 'cloak', 'scepter', 'coven', 'charm', 'spirit', 'nether', 'abyss',
+                    'celestial', 'hellfire', 'phantom', 'demon', 'angel', 'relic', 'prophecy', 'seer', 'alchemy', 'arcane',
+                    'astral', 'mana', 'sigil', 'wyrm', 'darklord', 'dimension', 'transmute', 'incantation', 'champion', 'doom',
+                    'bane', 'guardian', 'portalstone', 'whisperer', 'heir', 'harbinger', 'illusionist', 'ritualist', 'moonblade', 'twilight'
+                    ]
+                    ,
+                games: [
+                    'pixel', 'quest', 'arcade', 'retro', 'console', 'joystick', 'gamer', 'score', 'level', 'combo',
+                    'avatar', 'arena', 'mission', 'enemy', 'coin', 'health', 'powerup', 'speedrun', 'checkpoint', 'controller',
+                    'loading', 'save', 'pause', 'continue', 'start', 'select', 'play', 'mode', 'campaign', 'update',
+                    'patch', 'debug', 'rank', 'ranking', 'multiplayer', 'singleplayer', 'bot', 'AI', 'glitch', 'frame',
+                    'pixelart', 'input', 'output', 'spawn', 'respawn', 'platformer', 'inventory', 'crafting', 'sandbox', 'skin',
+                    'custom', 'timer', 'reaction', 'endless', 'classic', 'hardcore', 'coop', 'battle', 'royale', 'jump',
+                    'dash', 'slide', 'spin', 'build', 'explore', 'discover', 'loot', 'clan', 'guild', 'match',
+                    'round', 'stage', 'final', 'victory', 'defeat', 'scoreboard', 'versus', 'overdrive', 'rage', 'ultra',
+                    'epic', 'rare', 'bonus', 'power', 'shield', 'unlock', 'weapon', 'tools', 'engine', 'memory',
+                    'restart', 'exit', 'ranked', 'challenge', 'leader', 'checkpoint2', 'turbo', 'glow', 'blast', 'ragequit'
+                    ]
+
+            },
+            hard : {
+                animals: [
+                    'elephant', 'giraffe', 'penguin', 'dolphin', 'cheetah', 'kangaroo', 'alpaca', 'anaconda', 'baboon', 'beetle',
+                    'blackbird', 'bonobo', 'buffalo', 'capybara', 'cassowary', 'caterpillar', 'centipede', 'chinchilla', 'cicada',
+                    'coati', 'cormorant', 'cougar', 'cuckoo', 'dormouse', 'echidna', 'eel', 'falcon', 'flounder', 'gallinule',
+                    'gazelle', 'gibbon', 'giraffe', 'glowworm', 'gnu', 'guinea', 'guppy', 'harrier', 'heron', 'hornet', 'ibex',
+                    'iguana', 'jackal', 'jellyfish', 'kestrel', 'koala', 'lemming', 'lizard', 'llama', 'lynx', 'macaque',
+                    'magpie', 'manatee', 'marmoset', 'mole', 'mongoose', 'moth', 'mouse', 'narwhal', 'newt', 'ocelot',
+                    'orangutan', 'oryx', 'ostrich', 'otter', 'owl', 'pangolin', 'parakeet', 'parrot', 'peacock', 'pelican',
+                    'penguin', 'pheasant', 'platypus', 'porcupine', 'possum', 'puffin', 'python', 'quail', 'rabbit', 'raccoon',
+                    'rat', 'reindeer', 'rhinoceros', 'salamander', 'seahorse', 'shrew', 'skunk', 'sloth', 'snail', 'snake',
+                    'squid', 'starling', 'stork', 'swan', 'tapir', 'termite', 'toad', 'turkey', 'vulture', 'walrus', 'wolverine'
+                ],
+                fantasy: [
+                    'sorcerer', 'enchanted', 'mystical', 'adventure', 'treasure', 'legendary', 'divine', 'immortal', 'summoner',
+                    'phantasm', 'specter', 'witchcraft', 'demonlord', 'chronicle', 'celestial', 'dungeon', 'eldritch', 'elemental',
+                    'enigma', 'ethereal', 'fairyland', 'fantasia', 'illusionist', 'invoker', 'lorekeeper', 'magicka', 'metamagic',
+                    'mythos', 'necropolis', 'netherworld', 'prophecy', 'realm', 'ritual', 'runestone', 'seeress', 'shadowbane',
+                    'shapeshifter', 'sorcery', 'spellbook', 'telekinesis', 'timewarp', 'transmutation', 'unseen', 'vanishing',
+                    'voidling', 'warlockery', 'witchlight', 'wyrmling', 'zealot', 'amulet', 'arcana', 'astralplane', 'aura',
+                    'beacon', 'blessing', 'bond', 'chronicler', 'conjurer', 'curseborn', 'diviner', 'dreamscape', 'eldergod',
+                    'empyreal', 'feywild', 'grimoire', 'guardian', 'hexblade', 'highborn', 'incantor', 'keeper', 'luminous',
+                    'manaflow', 'mirrorrealm', 'mystagogue', 'nightmare', 'omen', 'oracle', 'phantomblade', 'planeshift',
+                    'primal', 'quicksilver', 'runeveil', 'sacred', 'sanctum', 'shadowveil', 'sigilbound', 'soulfire', 'spiritwalker',
+                    'starlight', 'sunblade', 'teleportation', 'trickster', 'twilight', 'visionary', 'voidcaller', 'wayfarer'
+                ],
+                science: [
+                    'universe', 'quantum', 'molecule', 'gravity', 'asteroid', 'telescope', 'blackhole', 'galaxy', 'neutron',
+                    'proton', 'electron', 'nucleus', 'atom', 'isotope', 'orbit', 'relativity', 'photon', 'spectrum', 'infrared',
+                    'ultraviolet', 'fusion', 'fission', 'plasma', 'vacuum', 'hypothesis', 'theory', 'experiment', 'research',
+                    'lab', 'science', 'biology', 'physics', 'chemistry', 'geology', 'astronomy', 'zoology', 'botany',
+                    'evolution', 'species', 'ecosystem', 'climate', 'genetics', 'cell', 'organism', 'bacteria', 'virus',
+                    'enzyme', 'neuron', 'synapse', 'cortex', 'robotics', 'algorithm', 'circuit', 'resistor', 'capacitor',
+                    'magnetism', 'electricity', 'voltage', 'current', 'battery', 'power', 'nanotech', 'biotech', 'aerospace',
+                    'rocket', 'satellite', 'gravitywave', 'darkmatter', 'singularity', 'supernova', 'cosmos', 'stringtheory',
+                    'chaos', 'thermodynamics', 'entropy', 'inertia', 'momentum', 'velocity', 'acceleration', 'density',
+                    'pressure', 'buoyancy', 'reaction', 'compound', 'element', 'solution', 'mixture', 'pH', 'oxidation',
+                    'crystal', 'magnet', 'sensor', 'android', 'AI', 'neuralnet', 'turbine', 'engine', 'vacuumtube', 'semiconductor'
+                ]
+            }
+        };
+
+        let currentWord = '';
+        let guessedLetters = [];
+        let incorrectGuesses = 0;
+        let maxGuesses = 7;
+        let gameOver = false;
+        let currentDifficulty = 'easy';
+        let currentCategory = '';
+        let hintsLeft = 3;
+        let soundEnabled = true;
+
+        function initGame() {
+            createKeyboard();
+            setupDifficultyButtons();
+            newGame();
+        }
+
+        function createKeyboard() {
+            const keyboard = document.getElementById('keyboard');
+            const letters = 'QWERTYUIOPASDFGHJKLZXCVBNM';
+            keyboard.innerHTML = '';
+            
+            for (let letter of letters) {
+                const key = document.createElement('button');
+                key.className = 'key';
+                key.textContent = letter;
+                key.onclick = () => guessLetter(letter.toLowerCase());
+                keyboard.appendChild(key);
+            }
+        }
+
+        function setupDifficultyButtons() {
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentDifficulty = btn.dataset.difficulty;
+                    newGame();
+                });
+            });
+        }
+
+        function selectRandomWord() {
+            const categories = Object.keys(wordBanks[currentDifficulty]);
+            currentCategory = categories[Math.floor(Math.random() * categories.length)];
+            const words = wordBanks[currentDifficulty][currentCategory];
+            return words[Math.floor(Math.random() * words.length)];
+        }
+
+        function newGame() {
+            currentWord = selectRandomWord();
+            guessedLetters = [];
+            incorrectGuesses = 0;
+            gameOver = false;
+            hintsLeft = 3;
+            
+            updateDisplay();
+            resetKeyboard();
+            updateExecution();
+            document.getElementById('messageBar').textContent = '';
+            document.getElementById('messageBar').className = 'message-bar';
+            
+            document.getElementById('categoryTag').textContent = 
+                `Category: ${currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1)}`;
+            document.getElementById('hintBtn').textContent = `Hint (${hintsLeft})`;
+        }
+
+        function updateDisplay() {
+            const display = currentWord
+                .split('')
+                .map(letter => guessedLetters.includes(letter) ? letter.toUpperCase() : '_')
+                .join(' ');
+            document.getElementById('wordDisplay').textContent = display;
+            
+            const wrongLetters = guessedLetters.filter(letter => !currentWord.includes(letter));
+            document.getElementById('wrongLetters').textContent = 
+                wrongLetters.length > 0 ? wrongLetters.join(' ').toUpperCase() : '—';
+            
+            document.getElementById('wrongCount').textContent = incorrectGuesses;
+            document.getElementById('remainingCount').textContent = maxGuesses - incorrectGuesses;
+        }
+
+        function updateExecution() {
+            const executionArt = document.getElementById('executionArt');
+            executionArt.textContent = executionStages[incorrectGuesses];
+            
+            if (incorrectGuesses >= maxGuesses) {
+                executionArt.classList.add('glitch');
+            } else {
+                executionArt.classList.remove('glitch');
+            }
+        }
+
+        function guessLetter(letter) {
+            if (gameOver || guessedLetters.includes(letter)) return;
+            
+            guessedLetters.push(letter);
+            const key = [...document.querySelectorAll('.key')].find(k => k.textContent.toLowerCase() === letter);
+            key.classList.add('used');
+            
+            if (currentWord.includes(letter)) {
+                key.classList.add('correct');
+                playSound('correct');
+            } else {
+                key.classList.add('incorrect');
+                incorrectGuesses++;
+                playSound('incorrect');
+            }
+            
+            updateDisplay();
+            updateExecution();
+            checkGameEnd();
+        }
+
+        function checkGameEnd() {
+            const wordGuessed = currentWord.split('').every(letter => guessedLetters.includes(letter));
+            
+            if (wordGuessed) {
+                gameOver = true;
+                document.getElementById('messageBar').textContent = 'VICTORY: WORD DECODED SUCCESSFULLY';
+                document.getElementById('messageBar').className = 'message-bar win-message';
+                playSound('win');
+            } else if (incorrectGuesses >= maxGuesses) {
+                gameOver = true;
+                document.getElementById('messageBar').textContent = 
+                    `EXECUTION COMPLETE: WORD WAS "${currentWord.toUpperCase()}"`;
+                document.getElementById('messageBar').className = 'message-bar lose-message';
+                playSound('lose');
+            }
+        }
+
+        function resetKeyboard() {
+            document.querySelectorAll('.key').forEach(key => {
+                key.className = 'key';
+            });
+        }
+
+        function getHint() {
+            if (hintsLeft > 0 && !gameOver) {
+                const unguessedLetters = currentWord.split('').filter(letter => !guessedLetters.includes(letter));
+                if (unguessedLetters.length > 0) {
+                    const hintLetter = unguessedLetters[Math.floor(Math.random() * unguessedLetters.length)];
+                    guessLetter(hintLetter);
+                    hintsLeft--;
+                    document.getElementById('hintBtn').textContent = `Hint (${hintsLeft})`;
+                }
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundBtn').textContent = `Sound: ${soundEnabled ? 'On' : 'Off'}`;
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            let frequency, waveType, duration;
+            switch(type) {
+                case 'correct': 
+                    frequency = 800; 
+                    waveType = 'square';
+                    duration = 0.3;
+                    break;
+                case 'incorrect': 
+                    frequency = 200; 
+                    waveType = 'sawtooth';
+                    duration = 0.3;
+                    break;
+                case 'win': 
+                    frequency = 1000; 
+                    waveType = 'sine';
+                    duration = 0.3;
+                    break;
+                case 'lose': 
+                    // Beheading sound effect - sharp cutting sound followed by thud
+                    frequency = 150; 
+                    waveType = 'sawtooth';
+                    duration = 0.8;
+                    
+                    // Create additional oscillator for the "thud" effect
+                    const thudOsc = audioContext.createOscillator();
+                    const thudGain = audioContext.createGain();
+                    thudOsc.connect(thudGain);
+                    thudGain.connect(audioContext.destination);
+                    
+                    thudOsc.frequency.value = 60;
+                    thudOsc.type = 'square';
+                    
+                    // Sharp cutting sound first
+                    gainNode.gain.setValueAtTime(0.08, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+                    
+                    // Thud sound after delay
+                    thudGain.gain.setValueAtTime(0, audioContext.currentTime);
+                    thudGain.gain.setValueAtTime(0.1, audioContext.currentTime + 0.4);
+                    thudGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+                    
+                    thudOsc.start(audioContext.currentTime + 0.4);
+                    thudOsc.stop(audioContext.currentTime + 0.8);
+                    break;
+            }
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = waveType;
+            
+            if (type !== 'lose') {
+                gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            }
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        // Start game function
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block';
+            initGame();
+        }
+
+        // Initialize start button
+        document.getElementById('startBtn').addEventListener('click', startGame);
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            const letter = e.key.toLowerCase();
+            if (letter >= 'a' && letter <= 'z') {
+                guessLetter(letter);
+            }
+        });
+    </script>
+</body>
+</html>

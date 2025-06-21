@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelTactix</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle grid background */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 20px 20px;
+            z-index: -1;
+        }
+
+        /* New start screen styles (only addition) */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #instructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Original game styles below (unchanged) */
+        .game-container {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            max-width: 420px;
+            width: 100%;
+            position: relative;
+            display: none; /* Initially hidden */
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            letter-spacing: 4px;
+            background: linear-gradient(45deg, #ffffff, #888888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ffffff, transparent);
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            margin: 30px auto;
+            width: 280px;
+            height: 280px;
+            position: relative;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .cell {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            user-select: none;
+            backdrop-filter: blur(5px);
+        }
+
+        .cell::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 6px;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .cell:hover:not(.filled) {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .cell:hover:not(.filled)::before {
+            opacity: 1;
+        }
+
+        .cell:hover:not(.filled)::after {
+            content: attr(data-preview);
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 32px;
+            position: absolute;
+            animation: previewPulse 1.5s infinite;
+        }
+
+        @keyframes previewPulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.9); }
+            50% { opacity: 0.6; transform: scale(1); }
+        }
+
+        .cell.x {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            animation: cellAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .cell.o {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+            animation: cellAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes cellAppear {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.5) rotate(180deg);
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .status {
+            font-size: 12px;
+            font-weight: 400;
+            margin: 25px 0;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            text-transform: uppercase;
+        }
+
+        .restart-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 14px 28px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .restart-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .restart-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .restart-btn:hover::before {
+            left: 100%;
+        }
+
+        .restart-btn:active {
+            transform: translateY(0);
+        }
+
+        .winning-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, #ffffff, transparent);
+            z-index: 10;
+            border-radius: 2px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            animation: drawLine 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes drawLine {
+            0% { 
+                transform: scale(0, 1);
+                opacity: 0;
+            }
+            100% { 
+                transform: scale(1, 1);
+                opacity: 1;
+            }
+        }
+
+        .horizontal-line {
+            height: 3px;
+            width: 85%;
+            left: 7.5%;
+        }
+
+        .vertical-line {
+            width: 3px;
+            height: 85%;
+            top: 7.5%;
+        }
+
+        .diagonal-line {
+            height: 3px;
+            width: 120%;
+            left: -10%;
+            top: 50%;
+            transform-origin: center;
+            animation: drawDiagonal 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes drawDiagonal {
+            0% { 
+                transform: scale(0) rotate(var(--rotation));
+                opacity: 0;
+            }
+            100% { 
+                transform: scale(1) rotate(var(--rotation));
+                opacity: 1;
+            }
+        }
+
+        .diagonal-right {
+            --rotation: 45deg;
+        }
+
+        .diagonal-left {
+            --rotation: -45deg;
+        }
+
+        .winner-announcement {
+            color: #ffffff;
+            font-weight: 700;
+            animation: winnerGlow 2s infinite alternate;
+        }
+
+        @keyframes winnerGlow {
+            0% { 
+                opacity: 0.8;
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            }
+            100% { 
+                opacity: 1;
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            }
+        }
+
+        .cell.winning {
+            background: rgba(255, 255, 255, 0.2) !important;
+            border-color: rgba(255, 255, 255, 0.6) !important;
+            color: #ffffff !important;
+            box-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.3),
+                inset 0 0 20px rgba(255, 255, 255, 0.1);
+            animation: winnerPulse 1.2s infinite alternate;
+        }
+
+        .cell.dimmed {
+            opacity: 0.3 !important;
+            filter: blur(1px);
+        }
+
+        @keyframes winnerPulse {
+            0% { 
+                transform: scale(1);
+                box-shadow: 
+                    0 0 20px rgba(255, 255, 255, 0.3),
+                    inset 0 0 20px rgba(255, 255, 255, 0.1);
+            }
+            100% { 
+                transform: scale(1.05);
+                box-shadow: 
+                    0 0 30px rgba(255, 255, 255, 0.5),
+                    inset 0 0 30px rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        .game-container.win-effect {
+            animation: winEffect 0.8s ease-out;
+        }
+
+        @keyframes winEffect {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.02); }
+            50% { transform: scale(0.98); }
+            75% { transform: scale(1.01); }
+        }
+
+        .game-container.lose-effect {
+            animation: loseEffect 0.6s ease-out;
+        }
+
+        @keyframes loseEffect {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 30px 20px;
+            }
+            
+            .game-board {
+                width: 240px;
+                height: 240px;
+                gap: 6px;
+                padding: 8px;
+            }
+            
+            .cell {
+                font-size: 28px;
+            }
+            
+            .title {
+                font-size: 20px;
+                letter-spacing: 2px;
+            }
+        }
+
+        /* Subtle particles effect */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(0.3);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- New start screen (only addition) -->
+    <div id="startScreen">
+        <h1 id="gameTitle">PIXELTACTIX</h1>
+        <button id="startBtn">Start</button>
+        <div id="instructions">
+            Click on any cell to place your mark<br>
+            Get three in a row to win<br>
+            Player X goes first
+        </div>
+    </div>
+
+    <!-- Original game HTML below (unchanged) -->
+    <div class="game-container">
+        <div class="title">PIXELTACTIX</div>
+        
+        <div class="game-board" id="gameBoard">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        
+        <div class="status" id="gameStatus">Player X Turn</div>
+        
+        <button class="restart-btn" id="restartBtn" onclick="restartGame()">
+            New Game
+        </button>
+    </div>
+
+    <script>
+        // Create floating particles effect
+        function createParticles(cellIndex) {
+            const cell = cells[cellIndex];
+            const cellRect = cell.getBoundingClientRect();
+            const boardRect = boardElement.getBoundingClientRect();
+            
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                const cellCenterX = cellRect.left + cellRect.width / 2 - boardRect.left;
+                const cellCenterY = cellRect.top + cellRect.height / 2 - boardRect.top;
+                
+                const offsetX = (Math.random() - 0.5) * 30;
+                const offsetY = (Math.random() - 0.5) * 30;
+                
+                particle.style.left = (cellCenterX + offsetX) + 'px';
+                particle.style.top = (cellCenterY + offsetY) + 'px';
+                particle.style.animation = `floatUp ${1 + Math.random() * 0.5}s ease-out forwards`;
+                particle.style.animationDelay = Math.random() * 0.2 + 's';
+                
+                boardElement.appendChild(particle);
+                
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 1500);
+            }
+        }
+
+        function highlightWinningCells(winningIndices) {
+            cells.forEach((cell, index) => {
+                if (winningIndices.includes(index)) {
+                    cell.classList.add('winning');
+                    setTimeout(() => createParticles(index), index * 80);
+                } else if (cell.classList.contains('filled')) {
+                    cell.classList.add('dimmed');
+                }
+            });
+        }
+
+        function addWinEffect() {
+            const gameContainer = document.querySelector('.game-container');
+            gameContainer.classList.add('win-effect');
+            setTimeout(() => {
+                gameContainer.classList.remove('win-effect');
+            }, 800);
+        }
+
+        function addLoseEffect() {
+            const gameContainer = document.querySelector('.game-container');
+            gameContainer.classList.add('lose-effect');
+            setTimeout(() => {
+                gameContainer.classList.remove('lose-effect');
+            }, 600);
+        }
+
+        // Minimal sound effects
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(frequency, duration, type = 'sine') {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        let currentPlayer = 'X';
+        let gameBoard = Array(9).fill('');
+        let gameActive = true;
+        
+        const cells = document.querySelectorAll('.cell');
+        const gameStatus = document.getElementById('gameStatus');
+        const restartBtn = document.getElementById('restartBtn');
+        const boardElement = document.getElementById('gameBoard');
+        
+        const winningConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        function initGame() {
+            cells.forEach((cell, index) => {
+                cell.addEventListener('click', () => handleCellClick(index));
+                cell.addEventListener('mouseenter', () => handleCellHover(index));
+                cell.addEventListener('mouseleave', () => handleCellLeave(index));
+            });
+            updateGameStatus();
+        }
+
+        function handleCellClick(index) {
+            if (gameBoard[index] !== '' || !gameActive) {
+                playSound(200, 0.15);
+                return;
+            }
+            
+            playSound(600, 0.1);
+            
+            gameBoard[index] = currentPlayer;
+            cells[index].textContent = currentPlayer;
+            cells[index].classList.add(currentPlayer.toLowerCase());
+            cells[index].classList.add('filled');
+            
+            const winningIndices = checkWinner();
+            if (winningIndices) {
+                gameActive = false;
+                gameStatus.textContent = `Player ${currentPlayer} Wins!`;
+                gameStatus.classList.add('winner-announcement');
+                addWinEffect();
+                drawWinningLine();
+                highlightWinningCells(winningIndices);
+                setTimeout(() => playSound(800, 0.4), 100);
+            } else if (gameBoard.every(cell => cell !== '')) {
+                gameActive = false;
+                gameStatus.textContent = 'Draw Game';
+                gameStatus.classList.add('winner-announcement');
+                addLoseEffect();
+                playSound(400, 0.3);
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                updateGameStatus();
+            }
+        }
+
+        function handleCellHover(index) {
+            if (gameBoard[index] === '' && gameActive) {
+                cells[index].setAttribute('data-preview', currentPlayer);
+            }
+        }
+
+        function handleCellLeave(index) {
+            cells[index].removeAttribute('data-preview');
+        }
+
+        function checkWinner() {
+            for (let condition of winningConditions) {
+                const [a, b, c] = condition;
+                if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+                    return condition;
+                }
+            }
+            return null;
+        }
+
+        function drawWinningLine() {
+            const winningCondition = winningConditions.find(condition => {
+                const [a, b, c] = condition;
+                return gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c];
+            });
+            
+            if (!winningCondition) return;
+            
+            setTimeout(() => {
+                const line = document.createElement('div');
+                line.classList.add('winning-line');
+                
+                const [a, b, c] = winningCondition;
+                
+                if ((a === 0 && b === 1 && c === 2) || (a === 3 && b === 4 && c === 5) || (a === 6 && b === 7 && c === 8)) {
+                    line.classList.add('horizontal-line');
+                    const row = Math.floor(a / 3);
+                    line.style.top = `${row * 33.33 + 16.67}%`;
+                }
+                else if ((a === 0 && b === 3 && c === 6) || (a === 1 && b === 4 && c === 7) || (a === 2 && b === 5 && c === 8)) {
+                    line.classList.add('vertical-line');
+                    const col = a % 3;
+                    line.style.left = `${col * 33.33 + 16.67}%`;
+                }
+                else if (a === 0 && b === 4 && c === 8) {
+                    line.classList.add('diagonal-line', 'diagonal-right');
+                }
+                else if (a === 2 && b === 4 && c === 6) {
+                    line.classList.add('diagonal-line', 'diagonal-left');
+                }
+                
+                boardElement.appendChild(line);
+            }, 100);
+        }
+
+        function updateGameStatus() {
+            if (gameActive) {
+                gameStatus.textContent = `Player ${currentPlayer} Turn`;
+            }
+        }
+
+        function restartGame() {
+            playSound(1000, 0.15);
+            
+            currentPlayer = 'X';
+            gameBoard = Array(9).fill('');
+            gameActive = true;
+            gameStatus.classList.remove('winner-announcement');
+            
+            const winLine = document.querySelector('.winning-line');
+            if (winLine) {
+                winLine.remove();
+            }
+            
+            const particles = document.querySelectorAll('.particle');
+            particles.forEach(particle => particle.remove());
+            
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('x', 'o', 'filled', 'winning', 'dimmed');
+                cell.removeAttribute('data-preview');
+            });
+            
+            updateGameStatus();
+        }
+
+        // Add start button functionality (only addition)
+        document.getElementById('startBtn').addEventListener('click', function() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.querySelector('.game-container').style.display = 'block';
+            initGame();
+        });
+    </script>
+</body>
+</html>

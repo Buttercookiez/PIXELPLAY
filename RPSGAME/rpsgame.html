@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Clash: Rock, Paper, Scissors!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            font-size: 8px;
+            line-height: 1.4;
+        }
+
+        /* New start screen styles */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            font-family: 'Courier New', monospace;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+        }
+
+        #startBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #instructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        /* Original game styles below */
+        .game-container {
+            background: #ffffff;
+            color: #000000;
+            border: 8px solid #000000;
+            max-width: 480px;
+            width: 100%;
+            padding: 0;
+            position: relative;
+            display: none; /* Initially hidden */
+        }
+
+        .game-container::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    #000 0px,
+                    #000 2px,
+                    transparent 2px,
+                    transparent 4px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    #000 0px,
+                    #000 2px,
+                    transparent 2px,
+                    transparent 4px
+                );
+            z-index: -1;
+        }
+
+        .header {
+            background: #000000;
+            color: #ffffff;
+            padding: 16px;
+            text-align: center;
+            border-bottom: 4px solid #000000;
+        }
+
+        .title {
+            font-size: 12px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .score-display {
+            font-size: 8px;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+
+        .main-content {
+            padding: 20px;
+        }
+
+        .instruction {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 8px;
+            background: #000000;
+            color: #ffffff;
+            padding: 8px;
+            border: 2px solid #000000;
+            letter-spacing: 1px;
+        }
+
+        .move-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .move-btn {
+            width: 100%;
+            height: 80px;
+            background: #ffffff;
+            border: 4px solid #000000;
+            font-size: 24px;
+            cursor: pointer;
+            position: relative;
+            transition: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .move-btn:hover {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .move-btn:active {
+            transform: translate(2px, 2px);
+        }
+
+        .move-btn::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -8px;
+            bottom: -8px;
+            background: #000000;
+            z-index: -1;
+        }
+
+        .btn-icon {
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .btn-label {
+            font-size: 6px;
+            letter-spacing: 1px;
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        .battle-screen {
+            background: #ffffff;
+            border: 4px solid #000000;
+            min-height: 120px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .battle-screen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent 0px,
+                    transparent 8px,
+                    #cccccc 8px,
+                    #cccccc 9px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0px,
+                    transparent 8px,
+                    #cccccc 8px,
+                    #cccccc 9px
+                );
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .battle-content {
+            padding: 16px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .battle-vs {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .player-move, .computer-move {
+            background: #000000;
+            color: #ffffff;
+            padding: 8px;
+            border: 2px solid #000000;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .move-icon {
+            font-size: 16px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .move-label {
+            font-size: 6px;
+            letter-spacing: 1px;
+        }
+
+        .vs-text {
+            font-size: 12px;
+            font-weight: bold;
+            background: #ffffff;
+            color: #000000;
+            padding: 4px 8px;
+            border: 2px solid #000000;
+        }
+
+        .result-display {
+            background: #000000;
+            color: #ffffff;
+            padding: 12px;
+            margin-top: 12px;
+            border: 2px solid #000000;
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .result-display.win {
+            animation: pixelBlink 0.5s steps(2, end) 3;
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .result-display.lose {
+            background: #666666;
+            color: #ffffff;
+        }
+
+        .result-display.tie {
+            background: #333333;
+            color: #ffffff;
+        }
+
+        @keyframes pixelBlink {
+            0% { background: #000000; color: #ffffff; }
+            50% { background: #ffffff; color: #000000; }
+            100% { background: #000000; color: #ffffff; }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .reset-btn {
+            background: #ffffff;
+            color: #000000;
+            border: 4px solid #000000;
+            padding: 12px 16px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            cursor: pointer;
+            position: relative;
+            letter-spacing: 1px;
+        }
+
+        .reset-btn:hover {
+            background: #000000;
+            color: #ffffff;
+        }
+
+        .reset-btn:active {
+            transform: translate(2px, 2px);
+        }
+
+        .reset-btn::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -8px;
+            bottom: -8px;
+            background: #000000;
+            z-index: -1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Fixed waiting message with better contrast */
+        .waiting-message {
+            text-align: center;
+            font-size: 9px;
+            padding: 20px;
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            margin: 16px;
+            letter-spacing: 1px;
+            line-height: 1.6;
+        }
+
+        .processing-message {
+            text-align: center;
+            font-size: 9px;
+            padding: 20px;
+            background: #333333;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            margin: 16px;
+            letter-spacing: 1px;
+            animation: processingPulse 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes processingPulse {
+            0% { background: #333333; }
+            100% { background: #666666; }
+        }
+
+        /* Improved scanline effect */
+        .scanlines {
+            position: relative;
+        }
+
+        .scanlines::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0px,
+                transparent 2px,
+                rgba(0, 0, 0, 0.05) 2px,
+                rgba(0, 0, 0, 0.05) 4px
+            );
+            pointer-events: none;
+            animation: scanline 3s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
+        }
+
+        /* Keyboard hint */
+        .keyboard-hint {
+            text-align: center;
+            font-size: 6px;
+            color: #666666;
+            margin-top: 12px;
+            letter-spacing: 1px;
+            line-height: 1.4;
+        }
+
+        /* Score highlighting */
+        .score-display span {
+            padding: 4px 8px;
+            background: #ffffff;
+            color: #000000;
+            border: 1px solid #ffffff;
+            margin: 0 4px;
+        }
+
+        /* Win streak indicator */
+        .win-streak {
+            font-size: 6px;
+            color: #ffffff;
+            background: #000000;
+            padding: 2px 4px;
+            margin-top: 4px;
+            border: 1px solid #ffffff;
+            display: inline-block;
+        }
+
+        /* Pixel perfect scaling */
+        @media (max-width: 600px) {
+            body {
+                font-size: 6px;
+            }
+            
+            .title {
+                font-size: 10px;
+            }
+            
+            .move-btn {
+                height: 60px;
+            }
+            
+            .btn-icon {
+                font-size: 16px;
+            }
+            
+            .btn-label {
+                font-size: 5px;
+            }
+            
+            .result-display {
+                font-size: 8px;
+            }
+            
+            .waiting-message, .processing-message {
+                font-size: 7px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .move-buttons {
+                grid-template-columns: 1fr;
+                max-width: 120px;
+                margin: 0 auto 20px;
+            }
+            
+            .move-btn {
+                height: 50px;
+            }
+            
+            .battle-vs {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .vs-text {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- New start screen -->
+    <div id="startScreen">
+        <h1 id="gameTitle">PIXEL CLASH</h1>
+        <button id="startBtn">Start</button>
+        <div id="instructions">
+            ROCK, PAPER, SCISSORS<br>
+            CHOOSE YOUR WEAPON<br>
+        </div>
+    </div>
+
+    <div class="game-container scanlines">
+        <div class="header">
+            <div class="title">PIXEL CLASH</div>
+            <div class="score-display">
+                <span>PLAYER: <span id="playerScore">0</span></span>
+                <span>CPU: <span id="computerScore">0</span></span>
+            </div>
+            <div id="winStreak" class="win-streak hidden">WIN STREAK: <span id="streakCount">0</span></div>
+        </div>
+
+        <div class="main-content">
+            <div class="instruction">
+                SELECT YOUR WEAPON
+            </div>
+
+            <div class="move-buttons">
+                <button class="move-btn" onclick="playGame('rock')" data-move="rock">
+                    <div class="btn-icon">●</div>
+                    <div class="btn-label">ROCK</div>
+                </button>
+                <button class="move-btn" onclick="playGame('paper')" data-move="paper">
+                    <div class="btn-icon">▢</div>
+                    <div class="btn-label">PAPER</div>
+                </button>
+                <button class="move-btn" onclick="playGame('scissors')" data-move="scissors">
+                    <div class="btn-icon">✂</div>
+                    <div class="btn-label">SCISSORS</div>
+                </button>
+            </div>
+
+            <div class="battle-screen" id="battleScreen">
+                <div class="waiting-message">
+                    PRESS A BUTTON TO<br>START BATTLE
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="reset-btn" onclick="resetGame()">RESET</button>
+            </div>
+
+            <div class="keyboard-hint">
+                KEYS: 1/Q=ROCK · 2/W=PAPER · 3/E=SCISSORS · R/SPACE=RESET
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let playerScore = 0;
+        let computerScore = 0;
+        let gameHistory = [];
+        let winStreak = 0;
+        let maxWinStreak = 0;
+
+        const moves = {
+            rock: { icon: '●', name: 'ROCK' },
+            paper: { icon: '▢', name: 'PAPER' },
+            scissors: { icon: '✂', name: 'SCISSORS' }
+        };
+
+        function getComputerMove() {
+            const moveKeys = Object.keys(moves);
+            const randomIndex = Math.floor(Math.random() * moveKeys.length);
+            return moveKeys[randomIndex];
+        }
+
+        function determineWinner(playerMove, computerMove) {
+            if (playerMove === computerMove) {
+                return 'tie';
+            }
+            
+            const winConditions = {
+                rock: 'scissors',
+                paper: 'rock',
+                scissors: 'paper'
+            };
+            
+            return winConditions[playerMove] === computerMove ? 'win' : 'lose';
+        }
+
+        function updateScore(result) {
+            if (result === 'win') {
+                playerScore++;
+                winStreak++;
+                if (winStreak > maxWinStreak) {
+                    maxWinStreak = winStreak;
+                }
+                document.getElementById('playerScore').textContent = playerScore;
+                updateWinStreak();
+            } else if (result === 'lose') {
+                computerScore++;
+                winStreak = 0;
+                document.getElementById('computerScore').textContent = computerScore;
+                updateWinStreak();
+            } else {
+                // Tie doesn't reset win streak
+                updateWinStreak();
+            }
+        }
+
+        function updateWinStreak() {
+            const winStreakElement = document.getElementById('winStreak');
+            const streakCountElement = document.getElementById('streakCount');
+            
+            if (winStreak >= 2) {
+                winStreakElement.classList.remove('hidden');
+                streakCountElement.textContent = winStreak;
+            } else {
+                winStreakElement.classList.add('hidden');
+            }
+        }
+
+        function displayBattle(playerMove, computerMove, result) {
+            const battleScreen = document.getElementById('battleScreen');
+            
+            const resultMessages = {
+                win: 'VICTORY!',
+                lose: 'DEFEAT!',
+                tie: 'DRAW!'
+            };
+
+            const streakBonus = winStreak >= 3 ? ` (${winStreak}x STREAK!)` : '';
+
+            battleScreen.innerHTML = `
+                <div class="battle-content">
+                    <div class="battle-vs">
+                        <div class="player-move">
+                            <div class="move-icon">${moves[playerMove].icon}</div>
+                            <div class="move-label">${moves[playerMove].name}</div>
+                        </div>
+                        <div class="vs-text">VS</div>
+                        <div class="computer-move">
+                            <div class="move-icon">${moves[computerMove].icon}</div>
+                            <div class="move-label">${moves[computerMove].name}</div>
+                        </div>
+                    </div>
+                    <div class="result-display ${result}">
+                        ${resultMessages[result]}${streakBonus}
+                    </div>
+                </div>
+            `;
+        }
+
+        function playGame(playerMove) {
+            // Disable buttons temporarily
+            const buttons = document.querySelectorAll('.move-btn');
+            buttons.forEach(btn => btn.style.pointerEvents = 'none');
+
+            // Show processing state with better styling
+            const battleScreen = document.getElementById('battleScreen');
+            battleScreen.innerHTML = `
+                <div class="processing-message">
+                    PROCESSING BATTLE...
+                </div>
+            `;
+
+            // Generate computer move and determine result after delay
+            setTimeout(() => {
+                const computerMove = getComputerMove();
+                const result = determineWinner(playerMove, computerMove);
+                
+                // Update game state
+                updateScore(result);
+                gameHistory.push({ player: playerMove, computer: computerMove, result });
+                
+                // Display battle result
+                displayBattle(playerMove, computerMove, result);
+                
+                // Re-enable buttons
+                buttons.forEach(btn => btn.style.pointerEvents = 'auto');
+                
+                // Play retro beep sound
+                playRetroSound(result);
+            }, 1000);
+        }
+
+        function resetGame() {
+            playerScore = 0;
+            computerScore = 0;
+            gameHistory = [];
+            winStreak = 0;
+            
+            document.getElementById('playerScore').textContent = '0';
+            document.getElementById('computerScore').textContent = '0';
+            document.getElementById('winStreak').classList.add('hidden');
+            document.getElementById('battleScreen').innerHTML = `
+                <div class="waiting-message">
+                    PRESS A BUTTON TO<br>START BATTLE
+                </div>
+            `;
+        }
+
+        function playRetroSound(result) {
+            // Create simple beep sounds
+            if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+                const AudioContextClass = AudioContext || webkitAudioContext;
+                const audioContext = new AudioContextClass();
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Different frequencies for different results
+                const frequencies = {
+                    win: [440, 554, 659], // Rising notes
+                    lose: [330, 277, 220], // Falling notes
+                    tie: [440, 440] // Double beep
+                };
+                
+                const freqPattern = frequencies[result];
+                oscillator.type = 'square'; // Classic arcade sound
+                
+                let time = audioContext.currentTime;
+                freqPattern.forEach((freq, index) => {
+                    oscillator.frequency.setValueAtTime(freq, time + (index * 0.15));
+                });
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + (freqPattern.length * 0.15));
+            }
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', function(event) {
+            switch(event.key.toLowerCase()) {
+                case '1':
+                case 'q':
+                    playGame('rock');
+                    break;
+                case '2':
+                case 'w':
+                    playGame('paper');
+                    break;
+                case '3':
+                case 'e':
+                    playGame('scissors');
+                    break;
+                case 'r':
+                case ' ':
+                    event.preventDefault();
+                    resetGame();
+                    break;
+            }
+        });
+
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('PIXEL CLASH INITIALIZED');
+            console.log('CONTROLS: 1/Q=ROCK 2/W=PAPER 3/E=SCISSORS R/SPACE=RESET');
+            
+            // Add start button event listener
+            document.getElementById('startBtn').addEventListener('click', function() {
+                document.getElementById('startScreen').style.display = 'none';
+                document.querySelector('.game-container').style.display = 'block';
+            });
+        });
+
+        // Add click sound effect to buttons
+        document.querySelectorAll('.move-btn, .reset-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Simple click sound
+                if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+                    const AudioContextClass = AudioContext || webkitAudioContext;
+                    const audioContext = new AudioContextClass();
+                    
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

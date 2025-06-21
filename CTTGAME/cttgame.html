@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIXEL STRIKE</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 400;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        #gameContainer {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            cursor: crosshair;
+            background: 
+                repeating-conic-gradient(from 0deg at 0 0, #000 0deg 90deg, #0a0a0a 90deg 180deg) 
+                0 0/40px 40px;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* Animated grid overlay */
+        #gameContainer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+            z-index: 1;
+            animation: gridShift 8s linear infinite;
+        }
+
+        @keyframes gridShift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(20px, 20px); }
+        }
+
+        /* Enhanced UI Header */
+        #ui-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.95) 100%);
+            border-bottom: 1px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            z-index: 100;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+        }
+
+        #score {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: #fff;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        #timer {
+            font-size: 16px;
+            color: #888;
+            letter-spacing: 2px;
+            min-width: 60px;
+            text-align: right;
+            transition: all 0.2s ease;
+        }
+
+        .timer-warning {
+            color: #fff !important;
+            animation: timerPulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes timerPulse {
+            0% { 
+                color: #fff;
+                text-shadow: 0 0 5px rgba(255,255,255,0.5);
+            }
+            100% { 
+                color: #ccc;
+                text-shadow: 0 0 15px rgba(255,255,255,0.8);
+            }
+        }
+
+        .score-update {
+            color: #fff !important;
+            transform: scale(1.15);
+            text-shadow: 0 0 20px rgba(255,255,255,0.9);
+        }
+
+        /* Enhanced Tile */
+        #tile {
+            position: absolute;
+            background: linear-gradient(135deg, #fff 0%, #f5f5f5 50%, #fff 100%);
+            cursor: pointer;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 50;
+            border: 2px solid #fff;
+            animation: tileSpawn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 
+                0 0 0 1px rgba(255,255,255,0.3),
+                0 4px 12px rgba(0,0,0,0.4),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+
+        #tile:hover {
+            transform: scale(1.05) translateZ(10px);
+            box-shadow: 
+                0 0 0 3px #fff,
+                0 0 25px rgba(255,255,255,0.6),
+                0 8px 20px rgba(0,0,0,0.5),
+                inset 0 2px 0 rgba(255,255,255,0.9);
+            background: linear-gradient(135deg, #fff 0%, #e8e8e8 50%, #fff 100%);
+        }
+
+        #tile:active {
+            transform: scale(0.95);
+        }
+
+        /* Screen overlays with better animations */
+        #startScreen, #gameOverScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.98) 100%);
+            z-index: 200;
+            backdrop-filter: blur(25px);
+            animation: screenFadeIn 0.5s ease-out;
+        }
+
+        @keyframes screenFadeIn {
+            0% { opacity: 0; transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        #startScreen h1 {
+            font-size: 52px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            letter-spacing: 12px;
+            color: #fff;
+            text-shadow: 
+                0 0 30px rgba(255,255,255,0.6),
+                0 0 60px rgba(255,255,255,0.3);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { 
+                text-shadow: 
+                    0 0 30px rgba(255,255,255,0.6),
+                    0 0 60px rgba(255,255,255,0.3);
+            }
+            100% { 
+                text-shadow: 
+                    0 0 40px rgba(255,255,255,0.8),
+                    0 0 80px rgba(255,255,255,0.5);
+            }
+        }
+
+        #startScreen .subtitle {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 60px;
+            text-align: center;
+            line-height: 1.8;
+            letter-spacing: 1px;
+            max-width: 450px;
+            background: rgba(255,255,255,0.02);
+            padding: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Enhanced button with better animations */
+        .btn {
+            background: transparent;
+            color: #fff;
+            border: 2px solid #444;
+            padding: 18px 36px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), #fff);
+            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: -1;
+        }
+
+        .btn:hover {
+            color: #000;
+            border-color: #fff;
+            box-shadow: 
+                0 0 0 1px #fff,
+                0 0 40px rgba(255,255,255,0.3),
+                0 10px 30px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn:hover::before {
+            left: 0;
+        }
+
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* Game over screen */
+        #gameOverScreen h2 {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 25px;
+            letter-spacing: 6px;
+            color: #fff;
+            animation: gameOverPulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes gameOverPulse {
+            0% { 
+                color: #fff;
+                text-shadow: 0 0 20px rgba(255,255,255,0.5);
+            }
+            100% { 
+                color: #ccc;
+                text-shadow: 0 0 30px rgba(255,255,255,0.7);
+            }
+        }
+
+        #finalScore {
+            font-size: 28px;
+            margin-bottom: 45px;
+            color: #888;
+            letter-spacing: 4px;
+            background: rgba(255,255,255,0.03);
+            padding: 20px 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Enhanced feedback with better animations */
+        .feedback {
+            position: fixed;
+            font-size: 24px;
+            font-weight: 700;
+            pointer-events: none;
+            z-index: 150;
+            animation: feedbackPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: #fff;
+            letter-spacing: 2px;
+            text-shadow: 
+                0 0 10px rgba(255,255,255,0.8),
+                0 0 20px rgba(255,255,255,0.4);
+        }
+
+        .miss-feedback {
+            animation: missFeedback 1s ease-out;
+            color: #888;
+            text-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+
+        /* Enhanced tile animations */
+        @keyframes tileSpawn {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.3) rotate(180deg);
+                box-shadow: 0 0 0 0 rgba(255,255,255,0);
+            }
+            60% {
+                opacity: 0.9;
+                transform: scale(1.1) rotate(20deg);
+                box-shadow: 0 0 20px rgba(255,255,255,0.6);
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1) rotate(0deg);
+                box-shadow: 
+                    0 0 0 1px rgba(255,255,255,0.3),
+                    0 4px 12px rgba(0,0,0,0.4);
+            }
+        }
+
+        .tile-hit {
+            animation: tileHit 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes tileHit {
+            0% { 
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+                box-shadow: 0 0 0 1px rgba(255,255,255,0.3);
+            }
+            25% {
+                transform: scale(1.4) rotate(90deg);
+                opacity: 0.9;
+                box-shadow: 
+                    0 0 0 4px #fff,
+                    0 0 50px rgba(255,255,255,0.9);
+            }
+            50% { 
+                transform: scale(1.6) rotate(180deg);
+                opacity: 0.7;
+                box-shadow: 
+                    0 0 0 2px #fff,
+                    0 0 60px rgba(255,255,255,0.7);
+            }
+            75% {
+                transform: scale(0.8) rotate(270deg);
+                opacity: 0.4;
+            }
+            100% { 
+                transform: scale(0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .tile-warning {
+            animation: tileWarning 0.3s ease-in-out infinite;
+        }
+
+        @keyframes tileWarning {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+                box-shadow: 
+                    0 0 0 1px rgba(255,255,255,0.3),
+                    0 4px 12px rgba(0,0,0,0.4);
+            }
+            50% { 
+                opacity: 0.7;
+                transform: scale(0.92);
+                background: #f5f5f5;
+                box-shadow: 
+                    0 0 0 2px rgba(255,255,255,0.6),
+                    0 0 25px rgba(255,255,255,0.4);
+            }
+        }
+
+        /* Enhanced feedback animations */
+        @keyframes feedbackPop {
+            0% { 
+                opacity: 1; 
+                transform: translateY(0) scale(0.5) rotate(-10deg);
+            }
+            30% {
+                opacity: 1;
+                transform: translateY(-25px) scale(1.3) rotate(5deg);
+                text-shadow: 
+                    0 0 15px rgba(255,255,255,1),
+                    0 0 30px rgba(255,255,255,0.6);
+            }
+            70% {
+                opacity: 1;
+                transform: translateY(-40px) scale(1.1) rotate(-2deg);
+            }
+            100% { 
+                opacity: 0; 
+                transform: translateY(-60px) scale(1.4) rotate(0deg);
+            }
+        }
+
+        @keyframes missFeedback {
+            0% { 
+                opacity: 1; 
+                transform: scale(0.8);
+            }
+            25% {
+                transform: scale(1.4);
+                opacity: 0.9;
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.7;
+            }
+            100% { 
+                opacity: 0; 
+                transform: scale(0.6);
+            }
+        }
+
+        /* Enhanced particle system */
+        .particle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            pointer-events: none;
+            z-index: 200;
+            border-radius: 0;
+            box-shadow: 0 0 6px rgba(255,255,255,0.8);
+        }
+
+        /* Screen shake animation */
+        .screen-shake {
+            animation: screenShake 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes screenShake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            10% { transform: translate(-2px, -1px) rotate(-0.5deg); }
+            20% { transform: translate(-1px, 0px) rotate(0.5deg); }
+            30% { transform: translate(1px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(0.5deg); }
+            50% { transform: translate(-1px, 2px) rotate(-0.5deg); }
+            60% { transform: translate(-1px, 1px) rotate(0deg); }
+            70% { transform: translate(2px, 1px) rotate(-0.5deg); }
+            80% { transform: translate(-2px, -1px) rotate(0.5deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        /* Screen flash effect */
+        .screen-flash {
+            animation: screenFlash 0.15s ease-out;
+        }
+
+        @keyframes screenFlash {
+            0% { 
+                background: 
+                    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 70%),
+                    repeating-conic-gradient(from 0deg at 0 0, #000 0deg 90deg, #0a0a0a 90deg 180deg);
+            }
+            100% { 
+                background: 
+                    repeating-conic-gradient(from 0deg at 0 0, #000 0deg 90deg, #0a0a0a 90deg 180deg);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            #ui-header {
+                padding: 0 20px;
+                height: 70px;
+            }
+            
+            #score {
+                font-size: 18px;
+                letter-spacing: 2px;
+            }
+            
+            #timer {
+                font-size: 14px;
+            }
+            
+            #startScreen h1 {
+                font-size: 36px;
+                letter-spacing: 6px;
+            }
+            
+            #startScreen .subtitle {
+                font-size: 12px;
+                padding: 20px;
+                margin: 0 20px 50px;
+            }
+            
+            .btn {
+                font-size: 12px;
+                padding: 16px 32px;
+                letter-spacing: 2px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #startScreen h1 {
+                font-size: 28px;
+                letter-spacing: 4px;
+            }
+            
+            .btn {
+                font-size: 11px;
+                padding: 14px 28px;
+            }
+            
+            .feedback {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="ui-header">
+            <div id="score">00000</div>
+            <div id="timer"></div>
+        </div>
+        
+        <div id="startScreen">
+            <h1>PIXEL STRIKE</h1>
+            <div class="subtitle">
+                Strike the white pixels before they fade away<br>
+                Speed and difficulty increase with your score<br>
+                Miss three times and the game ends
+            </div>
+            <button class="btn" id="startBtn">Begin Strike</button>
+        </div>
+        
+        <div id="gameOverScreen" style="display: none;">
+            <h2>STRIKE ENDED</h2>
+            <div id="finalScore">00000</div>
+            <button class="btn" id="restartBtn">Strike Again</button>
+        </div>
+    </div>
+
+    <script>
+        class PixelStrikeGame {
+            constructor() {
+                this.score = 0;
+                this.gameActive = false;
+                this.currentTile = null;
+                this.tileTimeout = null;
+                this.timerInterval = null;
+                this.baseTileSize = 65;
+                this.baseTimeLimit = 2200;
+                this.minTileSize = 28;
+                this.minTimeLimit = 650;
+                this.lives = 3;
+                
+                this.gameContainer = document.getElementById('gameContainer');
+                this.scoreElement = document.getElementById('score');
+                this.timerElement = document.getElementById('timer');
+                this.startScreen = document.getElementById('startScreen');
+                this.gameOverScreen = document.getElementById('gameOverScreen');
+                this.finalScoreElement = document.getElementById('finalScore');
+                
+                this.initAudio();
+                this.bindEvents();
+            }
+            
+            initAudio() {
+                this.audioContext = null;
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API not supported');
+                }
+            }
+            
+            playSound(frequency, duration, type = 'sine', volume = 0.1) {
+                if (!this.audioContext) return;
+                
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+            
+            playHitSound() {
+                this.playSound(1000, 0.12, 'square', 0.15);
+                setTimeout(() => this.playSound(1200, 0.08, 'square', 0.1), 50);
+            }
+            
+            playMissSound() {
+                this.playSound(150, 0.3, 'sawtooth', 0.12);
+            }
+            
+            playGameOverSound() {
+                setTimeout(() => this.playSound(400, 0.25, 'triangle', 0.15), 0);
+                setTimeout(() => this.playSound(300, 0.25, 'triangle', 0.15), 250);
+                setTimeout(() => this.playSound(200, 0.5, 'triangle', 0.15), 500);
+            }
+            
+            bindEvents() {
+                document.getElementById('startBtn').addEventListener('click', () => {
+                    if (this.audioContext && this.audioContext.state === 'suspended') {
+                        this.audioContext.resume();
+                    }
+                    this.startGame();
+                });
+                
+                document.getElementById('restartBtn').addEventListener('click', () => this.restartGame());
+                
+                this.gameContainer.addEventListener('click', (e) => this.handleGameClick(e));
+                this.gameContainer.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.handleGameClick(e.touches[0]);
+                });
+            }
+            
+            startGame() {
+                this.score = 0;
+                this.gameActive = true;
+                this.lives = 3;
+                this.startScreen.style.display = 'none';
+                this.gameOverScreen.style.display = 'none';
+                this.updateScore();
+                this.spawnTile();
+            }
+            
+            restartGame() {
+                this.gameOverScreen.style.display = 'none';
+                this.startGame();
+            }
+            
+            spawnTile() {
+                if (!this.gameActive) return;
+                
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
+                
+                if (this.currentTile) {
+                    this.currentTile.remove();
+                }
+                
+                // Enhanced difficulty scaling
+                const difficultyFactor = Math.min(this.score / 18, 0.88);
+                const tileSize = Math.max(
+                    this.baseTileSize - (difficultyFactor * (this.baseTileSize - this.minTileSize)),
+                    this.minTileSize
+                );
+                const timeLimit = Math.max(
+                    this.baseTimeLimit - (difficultyFactor * (this.baseTimeLimit - this.minTimeLimit)),
+                    this.minTimeLimit
+                );
+                
+                // Create enhanced tile
+                this.currentTile = document.createElement('div');
+                this.currentTile.id = 'tile';
+                this.currentTile.style.width = tileSize + 'px';
+                this.currentTile.style.height = tileSize + 'px';
+                
+                // Smart grid positioning
+                const margin = tileSize + 50;
+                const gridSize = 20;
+                const maxX = Math.floor((window.innerWidth - margin) / gridSize) * gridSize;
+                const maxY = Math.floor((window.innerHeight - margin - 120) / gridSize) * gridSize;
+                const minX = margin;
+                const minY = margin + 120;
+                
+                const gridX = Math.floor(Math.random() * ((maxX - minX) / gridSize)) * gridSize + minX;
+                const gridY = Math.floor(Math.random() * ((maxY - minY) / gridSize)) * gridSize + minY;
+                
+                this.currentTile.style.left = gridX + 'px';
+                this.currentTile.style.top = gridY + 'px';
+                
+                this.gameContainer.appendChild(this.currentTile);
+                
+                // Enhanced timer with warning states
+                let timeRemaining = timeLimit;
+                this.updateTimer(timeRemaining, timeLimit);
+                
+                this.timerInterval = setInterval(() => {
+                    timeRemaining -= 100;
+                    if (timeRemaining > 0) {
+                        this.updateTimer(timeRemaining, timeLimit);
+                        
+                        // Progressive warning states
+                        if (timeRemaining <= 500 && this.currentTile) {
+                            this.currentTile.classList.add('tile-warning');
+                            this.timerElement.classList.add('timer-warning');
+                        }
+                    }
+                }, 100);
+                
+                this.tileTimeout = setTimeout(() => {
+                    this.missedTile();
+                }, timeLimit);
+            }
+            
+            updateTimer(timeRemaining, totalTime) {
+                const seconds = Math.ceil(timeRemaining / 1000);
+                this.timerElement.textContent = `${seconds.toString().padStart(2, '0')}s`;
+                
+                // Remove warning class when time resets
+                if (timeRemaining === totalTime) {
+                    this.timerElement.classList.remove('timer-warning');
+                }
+            }
+            
+            handleGameClick(e) {
+                if (!this.gameActive || !this.currentTile) return;
+                
+                const rect = this.currentTile.getBoundingClientRect();
+                const clickX = e.clientX || e.pageX;
+                const clickY = e.clientY || e.pageY;
+                
+                if (clickX >= rect.left && clickX <= rect.right &&
+                    clickY >= rect.top && clickY <= rect.bottom) {
+                    this.hitTile(clickX, clickY);
+                }
+            }
+            
+            hitTile(x, y) {
+                if (this.tileTimeout) {
+                    clearTimeout(this.tileTimeout);
+                }
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
+                
+                // Enhanced hit effects
+                this.currentTile.classList.add('tile-hit');
+                this.playHitSound();
+                
+                this.score++;
+                this.updateScore();
+                
+                this.showFeedback('+1', x, y);
+                this.createEnhancedParticles(x, y);
+                this.screenShake();
+                this.screenFlash();
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate(40);
+                }
+                
+                setTimeout(() => {
+                    if (this.currentTile) {
+                        this.currentTile.remove();
+                        this.currentTile = null;
+                    }
+                }, 400);
+                
+                this.timerElement.textContent = '';
+                this.timerElement.classList.remove('timer-warning');
+                
+                setTimeout(() => {
+                    this.spawnTile();
+                }, 450);
+            }
+            
+            missedTile() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
+                
+                this.playMissSound();
+                this.lives--;
+                
+                if (this.currentTile) {
+                    this.currentTile.remove();
+                    this.currentTile = null;
+                }
+                
+                this.timerElement.textContent = '';
+                this.timerElement.classList.remove('timer-warning');
+                
+                if (this.lives <= 0) {
+                    this.endGame();
+                } else {
+                    this.showFeedback('MISS', window.innerWidth / 2, window.innerHeight / 2, 'miss');
+                    setTimeout(() => {
+                        this.spawnTile();
+                    }, 700);
+                }
+            }
+            
+            endGame() {
+                this.gameActive = false;
+                
+                if (this.tileTimeout) {
+                    clearTimeout(this.tileTimeout);
+                }
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
+                
+                this.playGameOverSound();
+                
+                this.finalScoreElement.textContent = this.formatScore(this.score);
+                this.gameOverScreen.style.display = 'flex';
+                
+                if (navigator.vibrate) {
+                    navigator.vibrate([150, 100, 150]);
+                }
+            }
+            
+            updateScore() {
+                this.scoreElement.textContent = this.formatScore(this.score);
+                this.scoreElement.classList.add('score-update');
+                setTimeout(() => {
+                    this.scoreElement.classList.remove('score-update');
+                }, 300);
+            }
+            
+            formatScore(score) {
+                return score.toString().padStart(5, '0');
+            }
+            
+            screenShake() {
+                this.gameContainer.classList.add('screen-shake');
+                setTimeout(() => {this.gameContainer.classList.remove('screen-shake');
+                }, 400);
+            }
+            
+            screenFlash() {
+                this.gameContainer.classList.add('screen-flash');
+                setTimeout(() => {
+                    this.gameContainer.classList.remove('screen-flash');
+                }, 150);
+            }
+            
+            showFeedback(text, x, y, type = 'hit') {
+                const feedback = document.createElement('div');
+                feedback.className = `feedback ${type === 'miss' ? 'miss-feedback' : ''}`;
+                feedback.textContent = text;
+                feedback.style.left = (x - 20) + 'px';
+                feedback.style.top = (y - 30) + 'px';
+                
+                document.body.appendChild(feedback);
+                
+                setTimeout(() => {
+                    feedback.remove();
+                }, 800);
+            }
+            
+            createEnhancedParticles(x, y) {
+                const particleCount = 12;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    
+                    const angle = (360 / particleCount) * i;
+                    const velocity = 2 + Math.random() * 3;
+                    const size = 2 + Math.random() * 3;
+                    
+                    particle.style.left = x + 'px';
+                    particle.style.top = y + 'px';
+                    particle.style.width = size + 'px';
+                    particle.style.height = size + 'px';
+                    
+                    const radians = angle * Math.PI / 180;
+                    const velocityX = Math.cos(radians) * velocity;
+                    const velocityY = Math.sin(radians) * velocity;
+                    
+                    document.body.appendChild(particle);
+                    
+                    let particleX = x;
+                    let particleY = y;
+                    let opacity = 1;
+                    let scale = 1;
+                    
+                    const animateParticle = () => {
+                        particleX += velocityX;
+                        particleY += velocityY;
+                        opacity -= 0.04;
+                        scale += 0.02;
+                        
+                        particle.style.left = particleX + 'px';
+                        particle.style.top = particleY + 'px';
+                        particle.style.opacity = opacity;
+                        particle.style.transform = `scale(${scale})`;
+                        
+                        if (opacity > 0) {
+                            requestAnimationFrame(animateParticle);
+                        } else {
+                            particle.remove();
+                        }
+                    };
+                    
+                    requestAnimationFrame(animateParticle);
+                }
+            }
+        }
+        
+        // Initialize game when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new PixelStrikeGame();
+        });
+    </script>
+</body>
+</html>
