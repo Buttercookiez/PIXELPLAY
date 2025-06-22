@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REFLEX</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            overflow: hidden;
+        }
+
+        /* New start screen styles */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #instructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Original game styles below (unchanged) */
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 40px;
+        }
+        
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            margin-bottom: 60px;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+        
+        .game-area {
+            width: 400px;
+            height: 400px;
+            border: 1px solid #333;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            margin-bottom: 40px;
+        }
+        
+        .game-area:hover {
+            border-color: #555;
+        }
+        
+        .game-text {
+            font-size: 1.2rem;
+            font-weight: 400;
+            text-align: center;
+            transition: all 0.2s ease;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        
+        .waiting {
+            color: #666;
+            animation: pulse 2s infinite ease-in-out;
+        }
+        
+        .ready {
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.5rem;
+            animation: flash 0.3s ease-out;
+        }
+        
+        .result {
+            color: #fff;
+            line-height: 1.6;
+        }
+        
+        .false-start {
+            background: #111 !important;
+            border-color: #666 !important;
+            animation: shake 0.4s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        
+        @keyframes flash {
+            0% { 
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+            20%, 40%, 60%, 80% { transform: translateX(2px); }
+        }
+        
+        .stats {
+            display: flex;
+            gap: 60px;
+            margin-bottom: 40px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        .stat {
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: #666;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 20px;
+            opacity: 0.8;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: 1px solid #333;
+            background: transparent;
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            min-width: 80px;
+        }
+        
+        .btn:hover {
+            border-color: #666;
+            background: #111;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-primary {
+            background: #fff;
+            color: #000;
+            border-color: #fff;
+        }
+        
+        .btn-primary:hover {
+            background: #f0f0f0;
+            border-color: #f0f0f0;
+        }
+        
+        .instructions {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 40px;
+            line-height: 1.8;
+            font-weight: 300;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .time-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.1em;
+        }
+        
+        .rating {
+            font-size: 0.9rem;
+            font-weight: 400;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        /* Minimalist shard effect */
+        .shard {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #fff;
+            pointer-events: none;
+            animation: explode 0.8s ease-out forwards;
+        }
+        
+        @keyframes explode {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(0) translate(var(--tx), var(--ty));
+                opacity: 0;
+            }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .game-area {
+                width: 300px;
+                height: 300px;
+            }
+            
+            .title {
+                font-size: 2rem;
+                margin-bottom: 40px;
+            }
+            
+            .stats {
+                gap: 30px;
+                font-size: 0.8rem;
+            }
+            
+            .time-display {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- New start screen -->
+    <div id="startScreen">
+        <h1 id="gameTitle">REFLEX</h1>
+        <button id="startBtn">START</button>
+        <div id="instructions">
+            Wait for the signal to appear<br>
+            Click as fast as you can when ready
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div id="gameScreen" class="hidden">
+            <h1 class="title">REFLEX</h1>
+            <div class="game-area" id="gameArea">
+                <div class="game-text" id="gameText">WAIT</div>
+            </div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="bestTime">--</div>
+                    <div class="stat-label">BEST</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="attempts">0</div>
+                    <div class="stat-label">TRIES</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="avgTime">--</div>
+                    <div class="stat-label">AVG</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" id="restartBtn">MENU</button>
+                <button class="btn" id="soundBtn">SOUND</button>
+                <button class="btn btn-primary" id="tryAgainBtn">AGAIN</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ReflexGame {
+            constructor() {
+                this.gameState = 'start';
+                this.startTime = 0;
+                this.reactionTime = 0;
+                this.bestTime = localStorage.getItem('bestTime') || null;
+                this.attempts = parseInt(localStorage.getItem('attempts')) || 0;
+                this.totalTime = parseInt(localStorage.getItem('totalTime')) || 0;
+                this.soundEnabled = localStorage.getItem('soundEnabled') !== 'false';
+                this.waitTimeout = null;
+                
+                this.initElements();
+                this.initEventListeners();
+                this.updateStats();
+                this.updateSoundButton();
+            }
+            
+            initElements() {
+                this.startScreen = document.getElementById('startScreen');
+                this.gameScreen = document.getElementById('gameScreen');
+                this.gameArea = document.getElementById('gameArea');
+                this.gameText = document.getElementById('gameText');
+                this.startBtn = document.getElementById('startBtn');
+                this.restartBtn = document.getElementById('restartBtn');
+                this.soundBtn = document.getElementById('soundBtn');
+                this.tryAgainBtn = document.getElementById('tryAgainBtn');
+                this.bestTimeEl = document.getElementById('bestTime');
+                this.attemptsEl = document.getElementById('attempts');
+                this.avgTimeEl = document.getElementById('avgTime');
+            }
+            
+            initEventListeners() {
+                this.startBtn.addEventListener('click', () => this.startGame());
+                this.restartBtn.addEventListener('click', () => this.restart());
+                this.soundBtn.addEventListener('click', () => this.toggleSound());
+                this.tryAgainBtn.addEventListener('click', () => this.startTest());
+                this.gameArea.addEventListener('click', () => this.handleClick());
+            }
+            
+            startGame() {
+                this.startScreen.style.display = 'none';
+                this.gameScreen.classList.remove('hidden');
+                this.startTest();
+            }
+            
+            startTest() {
+                this.gameState = 'waiting';
+                this.gameArea.className = 'game-area';
+                this.gameText.className = 'game-text waiting';
+                this.gameText.innerHTML = 'WAIT';
+                
+                const delay = 1500 + Math.random() * 3000;
+                
+                this.waitTimeout = setTimeout(() => {
+                    this.showSignal();
+                }, delay);
+            }
+            
+            showSignal() {
+                this.gameState = 'ready';
+                this.startTime = Date.now();
+                this.gameArea.className = 'game-area';
+                this.gameText.className = 'game-text ready';
+                this.gameText.innerHTML = 'NOW';
+                this.playSound('ready');
+            }
+            
+            handleClick() {
+                if (this.gameState === 'waiting') {
+                    this.falseStart();
+                } else if (this.gameState === 'ready') {
+                    this.recordReaction();
+                }
+            }
+            
+            falseStart() {
+                clearTimeout(this.waitTimeout);
+                this.gameState = 'falseStart';
+                this.gameArea.classList.add('false-start');
+                this.gameText.className = 'game-text';
+                this.gameText.innerHTML = 'TOO EARLY';
+                this.playSound('fail');
+                
+                setTimeout(() => {
+                    this.gameArea.classList.remove('false-start');
+                }, 400);
+            }
+            
+            recordReaction() {
+                this.reactionTime = Date.now() - this.startTime;
+                this.gameState = 'result';
+                
+                this.attempts++;
+                this.totalTime += this.reactionTime;
+                
+                if (!this.bestTime || this.reactionTime < this.bestTime) {
+                    this.bestTime = this.reactionTime;
+                    localStorage.setItem('bestTime', this.bestTime);
+                }
+                
+                localStorage.setItem('attempts', this.attempts);
+                localStorage.setItem('totalTime', this.totalTime);
+                
+                this.showResult();
+                this.updateStats();
+                this.createShardExplosion();
+                this.playSound('success');
+            }
+            
+            showResult() {
+                this.gameArea.className = 'game-area';
+                this.gameText.className = 'game-text result';
+                
+                const rating = this.getRating(this.reactionTime);
+                
+                this.gameText.innerHTML = `
+                    <div class="time-display">${this.reactionTime}MS</div>
+                    <div class="rating">${rating}</div>
+                `;
+            }
+            
+            getRating(time) {
+                if (time < 200) return 'EXCELLENT';
+                if (time < 300) return 'GOOD';
+                if (time < 400) return 'AVERAGE';
+                return 'SLOW';
+            }
+            
+            createShardExplosion() {
+                const rect = this.gameArea.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                for (let i = 0; i < 8; i++) {
+                    const shard = document.createElement('div');
+                    shard.className = 'shard';
+                    shard.style.left = centerX + 'px';
+                    shard.style.top = centerY + 'px';
+                    
+                    const angle = (i / 8) * Math.PI * 2;
+                    const distance = 40 + Math.random() * 30;
+                    const tx = Math.cos(angle) * distance;
+                    const ty = Math.sin(angle) * distance;
+                    
+                    shard.style.setProperty('--tx', tx + 'px');
+                    shard.style.setProperty('--ty', ty + 'px');
+                    
+                    this.gameArea.appendChild(shard);
+                    
+                    setTimeout(() => {
+                        if (shard.parentNode) {
+                            shard.parentNode.removeChild(shard);
+                        }
+                    }, 800);
+                }
+            }
+            
+            updateStats() {
+                this.bestTimeEl.textContent = this.bestTime ? this.bestTime + 'MS' : '--';
+                this.attemptsEl.textContent = this.attempts;
+                
+                if (this.attempts > 0) {
+                    const avg = Math.round(this.totalTime / this.attempts);
+                    this.avgTimeEl.textContent = avg + 'MS';
+                } else {
+                    this.avgTimeEl.textContent = '--';
+                }
+            }
+            
+            restart() {
+                this.startScreen.style.display = 'flex';
+                this.gameScreen.classList.add('hidden');
+                this.gameState = 'start';
+                clearTimeout(this.waitTimeout);
+            }
+            
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                localStorage.setItem('soundEnabled', this.soundEnabled);
+                this.updateSoundButton();
+            }
+            
+            updateSoundButton() {
+                this.soundBtn.style.opacity = this.soundEnabled ? '1' : '0.5';
+            }
+            
+            playSound(type) {
+                if (!this.soundEnabled) return;
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                switch (type) {
+                    case 'ready':
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                        break;
+                    case 'success':
+                        oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                        break;
+                    case 'fail':
+                        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                        break;
+                }
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            new ReflexGame();
+        });
+
+        // Prevent zoom on mobile
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>

@@ -27,6 +27,7 @@
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             image-rendering: crisp-edges;
+            touch-action: manipulation;
         }
 
         #gameContainer {
@@ -188,6 +189,7 @@
             letter-spacing: 0.2rem;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
+            -webkit-tap-highlight-color: transparent;
         }
 
         #startBtn:hover {
@@ -204,6 +206,7 @@
             line-height: 1.6;
             font-weight: 300;
             font-family: 'Courier New', monospace;
+            max-width: 80%;
         }
 
         /* Screen overlays with better animations */
@@ -436,16 +439,47 @@
             
             #gameTitle {
                 font-size: 2rem;
+                letter-spacing: 0.3rem;
+            }
+            
+            #startBtn {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
             }
         }
 
         @media (max-width: 480px) {
             #gameTitle {
                 font-size: 1.5rem;
+                margin-bottom: 1.5rem;
             }
             
             .feedback {
                 font-size: 20px;
+            }
+            
+            #startBtn {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.8rem;
+                letter-spacing: 0.1rem;
+            }
+            
+            #instructions {
+                font-size: 0.7rem;
+                line-height: 1.4;
+            }
+            
+            #ui-header {
+                height: 60px;
+                padding: 0 15px;
+            }
+            
+            #score {
+                font-size: 16px;
+            }
+            
+            #timer {
+                font-size: 12px;
             }
         }
     </style>
@@ -544,20 +578,35 @@
             }
             
             bindEvents() {
-                document.getElementById('startBtn').addEventListener('click', () => {
-                    if (this.audioContext && this.audioContext.state === 'suspended') {
-                        this.audioContext.resume();
-                    }
-                    this.startGame();
+                // Use both click and touch events for mobile compatibility
+                document.getElementById('startBtn').addEventListener('click', (e) => this.handleStart(e));
+                document.getElementById('startBtn').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.handleStart(e);
                 });
                 
-                document.getElementById('restartBtn').addEventListener('click', () => this.restartGame());
+                document.getElementById('restartBtn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.restartGame();
+                });
+                document.getElementById('restartBtn').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.restartGame();
+                });
                 
                 this.gameContainer.addEventListener('click', (e) => this.handleGameClick(e));
                 this.gameContainer.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     this.handleGameClick(e.touches[0]);
-                });
+                }, { passive: false });
+            }
+            
+            handleStart(e) {
+                e.preventDefault();
+                if (this.audioContext && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+                this.startGame();
             }
             
             startGame() {
@@ -603,13 +652,13 @@
                 this.currentTile.style.width = tileSize + 'px';
                 this.currentTile.style.height = tileSize + 'px';
                 
-                // Smart grid positioning
+                // Smart grid positioning with mobile consideration
                 const margin = tileSize + 50;
                 const gridSize = 20;
                 const maxX = Math.floor((window.innerWidth - margin) / gridSize) * gridSize;
-                const maxY = Math.floor((window.innerHeight - margin - 120) / gridSize) * gridSize;
+                const maxY = Math.floor((window.innerHeight - margin - (window.innerWidth < 768 ? 100 : 120)) / gridSize) * gridSize;
                 const minX = margin;
-                const minY = margin + 120;
+                const minY = margin + (window.innerWidth < 768 ? 100 : 120);
                 
                 const gridX = Math.floor(Math.random() * ((maxX - minX) / gridSize)) * gridSize + minX;
                 const gridY = Math.floor(Math.random() * ((maxY - minY) / gridSize)) * gridSize + minY;
@@ -763,7 +812,8 @@
             
             screenShake() {
                 this.gameContainer.classList.add('screen-shake');
-                setTimeout(() => {this.gameContainer.classList.remove('screen-shake');
+                setTimeout(() => {
+                    this.gameContainer.classList.remove('screen-shake');
                 }, 400);
             }
             

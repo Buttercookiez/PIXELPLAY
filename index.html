@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PixelPlay Arcade - Retro Gaming Hub</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="32x32" href="fav/favicon.ico">
     <style>
         * {
             margin: 0;
@@ -425,9 +426,23 @@
             outline: 2px solid var(--border-color);
             outline-offset: 2px;
         }
+
+        /* Audio player (hidden) */
+        #bgMusic {
+            display: none;
+        }
     </style>
 </head>
+<audio id="bgMusic" loop>
+  <source src="/Eric Skiff - A Night Of Dizzy Spells ♫ NO COPYRIGHT 8-bit Music + Background.mp3" type="audio/mpeg">
+  <source src="/Eric Skiff - A Night Of Dizzy Spells ♫ NO COPYRIGHT 8-bit Music + Background.mp3" type="audio/ogg">
+</audio>
 <body>
+    <!-- Audio Element -->
+    <audio id="bgMusic" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-game-show-947.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- CRT Overlay -->
     <div class="crt-overlay"></div>
 
@@ -441,7 +456,8 @@
         <button class="theme-btn" id="crtToggle">CRT</button>
         <button class="theme-btn" id="invertToggle">INV</button>
         <button class="theme-btn" id="pureToggle">B&W</button>
-        <button class="theme-btn" id="soundToggle">SND</button>
+        <button class="theme-btn" id="soundToggle">SFX</button>
+        <button class="theme-btn" id="musicToggle">MUSIC</button>
     </div>
 
     <div class="container">
@@ -455,21 +471,30 @@
             <a href="#games" class="cta-button">PLAY</a>
         </header>
 
+
         <!-- Game Grid -->
+         
         <main class="game-grid" id="games">
+            <!-- Memory -->
             <div class="game-card" data-game="memory" tabindex="0">
                 <div class="pixel-icon">
                     <svg viewBox="0 0 24 24">
-                        <rect x="4" y="4" width="6" height="6" fill="currentColor"/>
-                        <rect x="14" y="4" width="6" height="6" fill="currentColor"/>
-                        <rect x="4" y="14" width="6" height="6" fill="currentColor"/>
-                        <rect x="14" y="14" width="6" height="6" fill="currentColor"/>
+                        <rect x="4" y="4" width="4" height="4" fill="currentColor"/>
+                        <rect x="10" y="4" width="4" height="4" fill="currentColor"/>
+                        <rect x="16" y="4" width="4" height="4" fill="currentColor"/>
+                        <rect x="4" y="10" width="4" height="4" fill="currentColor"/>
+                        <rect x="10" y="10" width="4" height="4" fill="currentColor"/>
+                        <rect x="16" y="10" width="4" height="4" fill="currentColor"/>
+                        <rect x="4" y="16" width="4" height="4" fill="currentColor"/>
+                        <rect x="10" y="16" width="4" height="4" fill="currentColor"/>
+                        <rect x="16" y="16" width="4" height="4" fill="currentColor"/>
                     </svg>
                 </div>
                 <h2 class="game-title">MEMORY</h2>
                 <a href="/MFCGAME/mfcgame.html" class="play-btn" data-game-link="memory">PLAY</a>
             </div>
 
+            <!-- Simon -->
             <div class="game-card" data-game="simon" tabindex="0">
                 <div class="pixel-icon">
                     <svg viewBox="0 0 24 24">
@@ -481,47 +506,55 @@
                 <a href="/SIMONSAYSGAME/simonsays.html" class="play-btn" data-game-link="simon">PLAY</a>
             </div>
 
+            <!-- Pong -->
             <div class="game-card" data-game="pong" tabindex="0">
                 <div class="pixel-icon">
                     <svg viewBox="0 0 24 24">
-                        <rect x="2" y="6" width="2" height="12" fill="currentColor"/>
-                        <rect x="20" y="6" width="2" height="12" fill="currentColor"/>
+                        <rect x="2" y="8" width="2" height="8" fill="currentColor"/>
+                        <rect x="20" y="8" width="2" height="8" fill="currentColor"/>
                         <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                        <line x1="12" y1="12" x2="18" y2="8" stroke="currentColor" stroke-width="1"/>
                     </svg>
                 </div>
                 <h2 class="game-title">PONG</h2>
                 <a href="/PINGPONGGAME/pingponggame.html" class="play-btn" data-game-link="pong">PLAY</a>
             </div>
 
+            <!-- 2048 -->
             <div class="game-card" data-game="2048" tabindex="0">
                 <div class="pixel-icon">
                     <svg viewBox="0 0 24 24">
-                        <rect x="3" y="3" width="8" height="8" fill="currentColor"/>
-                        <rect x="13" y="3" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <rect x="3" y="13" width="8" height="8" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <rect x="13" y="13" width="8" height="8" fill="currentColor"/>
+                        <rect x="4" y="4" width="6" height="6" fill="currentColor"/>
+                        <rect x="12" y="4" width="6" height="6" fill="currentColor"/>
+                        <rect x="4" y="12" width="6" height="6" fill="currentColor"/>
+                        <rect x="12" y="12" width="6" height="6" fill="currentColor"/>
+                        <text x="7" y="8" font-size="3" text-anchor="middle" fill="var(--bg-color)">2</text>
+                        <text x="15" y="8" font-size="3" text-anchor="middle" fill="var(--bg-color)">4</text>
+                        <text x="7" y="16" font-size="3" text-anchor="middle" fill="var(--bg-color)">8</text>
                     </svg>
                 </div>
                 <h2 class="game-title">2048</h2>
                 <a href="/2048GAME/2048.html" class="play-btn" data-game-link="2048">PLAY</a>
             </div>
 
+            <!-- Beheaded -->
             <div class="game-card" data-game="beheaded" tabindex="0">
                 <div class="pixel-icon">
                     <svg viewBox="0 0 24 24">
-                        <rect x="10" y="4" width="4" height="6" fill="currentColor"/>
-                        <rect x="9" y="10" width="6" height="4" fill="currentColor"/>
-                        <rect x="8" y="14" width="2" height="6" fill="currentColor"/>
-                        <rect x="14" y="14" width="2" height="6" fill="currentColor"/>
-                        <rect x="11" y="18" width="2" height="2" fill="none" stroke="currentColor" stroke-width="1"/>
-                        <circle cx="11" cy="6" r="1" fill="white"/>
-                        <circle cx="13" cy="6" r="1" fill="white"/>
+                        <rect x="10" y="4" width="4" height="4" fill="currentColor"/>
+                        <rect x="8" y="8" width="8" height="4" fill="currentColor"/>
+                        <rect x="8" y="12" width="2" height="8" fill="currentColor"/>
+                        <rect x="14" y="12" width="2" height="8" fill="currentColor"/>
+                        <rect x="10" y="16" width="4" height="2" fill="var(--bg-color)" stroke="currentColor" stroke-width="0.5"/>
+                        <circle cx="11" cy="6" r="1" fill="var(--bg-color)"/>
+                        <circle cx="13" cy="6" r="1" fill="var(--bg-color)"/>
                     </svg>
                 </div>
                 <h2 class="game-title">BEHEADED</h2>
                 <a href="/BEHEADINGGAME/Beheadinggame.html" class="play-btn" data-game-link="beheaded">PLAY</a>
             </div>
 
+            <!-- Snake -->
             <div class="game-card" data-game="snake" tabindex="0">
                 <div class="pixel-icon">
                     <svg viewBox="0 0 24 24">
@@ -529,52 +562,32 @@
                         <rect x="6" y="12" width="2" height="2" fill="currentColor"/>
                         <rect x="8" y="12" width="2" height="2" fill="currentColor"/>
                         <rect x="10" y="12" width="2" height="2" fill="currentColor"/>
-                        <rect x="12" y="12" width="2" height="2" fill="currentColor"/>
-                        <rect x="14" y="12" width="2" height="2" fill="currentColor"/>
-                        <rect x="16" y="12" width="2" height="2" fill="currentColor"/>
-                        <rect x="18" y="10" width="2" height="2" fill="currentColor"/>
-                        <rect x="18" y="8" width="2" height="2" fill="currentColor"/>
-                        <circle cx="19" cy="7" r="0.5" fill="white"/>
-                        <rect x="8" y="8" width="2" height="2" fill="red"/>
+                        <rect x="12" y="10" width="2" height="2" fill="currentColor"/>
+                        <rect x="12" y="8" width="2" height="2" fill="currentColor"/>
+                        <circle cx="13" cy="7" r="0.5" fill="var(--bg-color)"/>
+                        <rect x="8" y="8" width="2" height="2" fill="#f00"/>
                     </svg>
                 </div>
                 <h2 class="game-title">SNAKE</h2>
                 <a href="/SNAKEGAME/snakegame.html" class="play-btn" data-game-link="snake">PLAY</a>
             </div>
 
-            <div class="game-card" data-game="stack" tabindex="0">
-                <div class="pixel-icon">
-                    <svg viewBox="0 0 24 24">
-                        <rect x="4" y="18" width="16" height="2" fill="currentColor"/>
-                        <rect x="6" y="15" width="12" height="2" fill="currentColor"/>
-                        <rect x="8" y="12" width="8" height="2" fill="currentColor"/>
-                        <rect x="10" y="9" width="4" height="2" fill="currentColor"/>
-                        <rect x="11" y="6" width="2" height="2" fill="currentColor"/>
-                    </svg>
-                </div>
-                <h2 class="game-title">STACK TOWER</h2>
-                <a href="/STACKGAME/stackgame.html" class="play-btn" data-game-link="stack">PLAY</a>
-            </div>
-
+            <!-- Tiles -->
             <div class="game-card" data-game="tiles" tabindex="0">
                 <div class="pixel-icon">
                     <svg viewBox="0 0 24 24">
-                        <rect x="2" y="2" width="5" height="5" fill="currentColor"/>
-                        <rect x="9" y="2" width="5" height="5" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <rect x="16" y="2" width="5" height="5" fill="currentColor"/>
-                        <rect x="2" y="9" width="5" height="5" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <rect x="9" y="9" width="5" height="5" fill="currentColor"/>
-                        <rect x="16" y="9" width="5" height="5" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <rect x="2" y="16" width="5" height="5" fill="currentColor"/>
-                        <rect x="9" y="16" width="5" height="5" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <rect x="16" y="16" width="5" height="5" fill="currentColor"/>
+                        <rect x="4" y="4" width="6" height="6" fill="currentColor"/>
+                        <rect x="12" y="4" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <rect x="4" y="12" width="6" height="6" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <rect x="12" y="12" width="6" height="6" fill="currentColor"/>
                     </svg>
                 </div>
                 <h2 class="game-title">TILES</h2>
                 <a href="/CTTGAME/cttgame.html" class="play-btn" data-game-link="tiles">PLAY</a>
             </div>
 
-            <div class="game-card" data-game="rps" tabindex="0">
+            <!-- RPS -->
+             <div class="game-card" data-game="rps" tabindex="0">
                 <div class="pixel-icon">
                     <svg viewBox="0 0 24 24">
                         <rect x="6" y="8" width="3" height="8" fill="currentColor"/>
@@ -587,15 +600,189 @@
                 <a href="/RPSGAME/rpsgame.html" class="play-btn" data-game-link="rps">PLAY</a>
             </div>
 
-            <div class="game-card" data-game="reaction" tabindex="0">
+            <!-- TTT -->
+            <div class="game-card" data-game="ttt" tabindex="0">
                 <div class="pixel-icon">
                     <svg viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <polygon points="12,4 16,12 12,20 8,12" fill="currentColor"/>
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <line x1="8" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="1"/>
+                        <line x1="12" y1="8" x2="8" y2="12" stroke="currentColor" stroke-width="1"/>
+                        <circle cx="18" cy="10" r="2" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <line x1="8" y1="16" x2="12" y2="16" stroke="currentColor" stroke-width="1"/>
+                        <circle cx="18" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="1"/>
                     </svg>
                 </div>
                 <h2 class="game-title">TTT</h2>
-                <a href="/TTT/tttgame.html" class="play-btn" data-game-link="reaction">PLAY</a>
+                <a href="/TTT/tttgame.html" class="play-btn" data-game-link="ttt">PLAY</a>
+            </div>
+
+            <!-- Blade -->
+            <div class="game-card" data-game="blade" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="2" fill="currentColor"/>
+                        <rect x="6" y="6" width="12" height="2" fill="currentColor"/>
+                        <rect x="8" y="8" width="8" height="2" fill="currentColor"/>
+                        <rect x="10" y="10" width="4" height="2" fill="currentColor"/>
+                        <rect x="12" y="12" width="2" height="8" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h2 class="game-title">BLADE</h2>
+                <a href="/BLADEBYTEGAME/bladebytegame.html" class="play-btn" data-game-link="blade">PLAY</a>
+            </div>
+
+            <!-- Breaker -->
+            <div class="game-card" data-game="breaker" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <rect x="6" y="6" width="4" height="4" fill="currentColor"/>
+                        <rect x="12" y="6" width="4" height="4" fill="currentColor"/>
+                        <rect x="6" y="12" width="4" height="4" fill="currentColor"/>
+                        <rect x="12" y="12" width="4" height="4" fill="currentColor"/>
+                        <circle cx="14" cy="14" r="1" fill="var(--bg-color)"/>
+                    </svg>
+                </div>
+                <h2 class="game-title">BREAKER</h2>
+                <a href="/CODEBREAKERGAME/codebreakergame.html" class="play-btn" data-game-link="breaker">PLAY</a>
+            </div>
+
+            <!-- Flinch -->
+            <div class="game-card" data-game="flinch" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h2 class="game-title">FLINCH</h2>
+                <a href="/FLINCHGAME/flinchgame.html" class="play-btn" data-game-link="flinch">PLAY</a>
+            </div>
+
+            <!-- Minevoid -->
+            <div class="game-card" data-game="minevoid" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <rect x="6" y="6" width="4" height="4" fill="currentColor"/>
+                        <rect x="14" y="6" width="4" height="4" fill="currentColor"/>
+                        <rect x="6" y="14" width="4" height="4" fill="currentColor"/>
+                        <rect x="14" y="14" width="4" height="4" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h2 class="game-title">MINEVOID</h2>
+                <a href="/MINEVOIDGAME/minevoidgame.html" class="play-btn" data-game-link="minevoid">PLAY</a>
+            </div>
+
+            <!-- Monotrix -->
+            <div class="game-card" data-game="monotrix" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <line x1="8" y1="8" x2="16" y2="8" stroke="currentColor" stroke-width="1"/>
+                        <line x1="8" y1="12" x2="16" y2="12" stroke="currentColor" stroke-width="1"/>
+                        <line x1="8" y1="16" x2="16" y2="16" stroke="currentColor" stroke-width="1"/>
+                        <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" stroke-width="1"/>
+                    </svg>
+                </div>
+                <h2 class="game-title">MONOTRIX</h2>
+                <a href="/MONOTRIXGAME/monotrixgame.html" class="play-btn" data-game-link="monotrix">PLAY</a>
+            </div>
+
+            <!-- Nanogram -->
+            <div class="game-card" data-game="nanogram" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <rect x="6" y="6" width="2" height="2" fill="currentColor"/>
+                        <rect x="10" y="6" width="2" height="2" fill="currentColor"/>
+                        <rect x="14" y="6" width="2" height="2" fill="currentColor"/>
+                        <rect x="6" y="10" width="2" height="2" fill="currentColor"/>
+                        <rect x="14" y="10" width="2" height="2" fill="currentColor"/>
+                        <rect x="6" y="14" width="2" height="2" fill="currentColor"/>
+                        <rect x="10" y="14" width="2" height="2" fill="currentColor"/>
+                        <rect x="14" y="14" width="2" height="2" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h2 class="game-title">NANOGRAM</h2>
+                <a href="/NANOGRAMGAME/nanogramgame.html" class="play-btn" data-game-link="nanogram">PLAY</a>
+            </div>
+
+            <!-- Lightbeam -->
+            <div class="game-card" data-game="lightbeam" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <line x1="4" y1="4" x2="20" y2="20" stroke="currentColor" stroke-width="1"/>
+                        <line x1="20" y1="4" x2="4" y2="20" stroke="currentColor" stroke-width="1"/>
+                        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                    </svg>
+                </div>
+                <h2 class="game-title">LIGHTBEAM</h2>
+                <a href="/LIGHTBEAMGAME/lightbeamgame.html" class="play-btn" data-game-link="lightbeam">PLAY</a>
+            </div>
+
+            <!-- Pixeout -->
+            <div class="game-card" data-game="pixeout" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <rect x="6" y="6" width="12" height="12" fill="currentColor"/>
+                        <rect x="8" y="8" width="8" height="8" fill="var(--bg-color)"/>
+                    </svg>
+                </div>
+                <h2 class="game-title">PIXEOUT</h2>
+                <a href="/PIXELOUTGAME/pixeloutgame.html" class="play-btn" data-game-link="pixeout">PLAY</a>
+            </div>
+
+            <!-- Reaction -->
+            <div class="game-card" data-game="reaction" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <circle cx="12" cy="12" r="4" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="1" fill="var(--bg-color)"/>
+                    </svg>
+                </div>
+                <h2 class="game-title">REACTION</h2>
+                <a href="/REACTIONTIMEGAME/reactiontimegame.html" class="play-btn" data-game-link="reaction">PLAY</a>
+            </div>
+
+            <!-- Slide -->
+            <div class="game-card" data-game="slide" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <rect x="6" y="6" width="4" height="4" fill="currentColor"/>
+                        <rect x="12" y="6" width="4" height="4" fill="currentColor"/>
+                        <rect x="6" y="12" width="4" height="4" fill="currentColor"/>
+                        <rect x="12" y="12" width="4" height="4" fill="currentColor"/>
+                        <rect x="9" y="9" width="6" height="6" fill="var(--bg-color)" stroke="currentColor" stroke-width="0.5"/>
+                    </svg>
+                </div>
+                <h2 class="game-title">SLIDE</h2>
+                <a href="/SLIDETHEBLOCKSGAME/slidetheblocksgame.html" class="play-btn" data-game-link="slide">PLAY</a>
+            </div>
+
+            <!-- Sudoku -->
+            <div class="game-card" data-game="sudoku" tabindex="0">
+                <div class="pixel-icon">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="4" y="4" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1"/>
+                        <line x1="8" y1="4" x2="8" y2="20" stroke="currentColor" stroke-width="1"/>
+                        <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" stroke-width="1"/>
+                        <line x1="16" y1="4" x2="16" y2="20" stroke="currentColor" stroke-width="1"/>
+                        <line x1="4" y1="8" x2="20" y2="8" stroke="currentColor" stroke-width="1"/>
+                        <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="1"/>
+                        <line x1="4" y1="16" x2="20" y2="16" stroke="currentColor" stroke-width="1"/>
+                        <text x="6" y="7" font-size="3" text-anchor="middle" fill="currentColor">5</text>
+                        <text x="10" y="7" font-size="3" text-anchor="middle" fill="currentColor">3</text>
+                    </svg>
+                </div>
+                <h2 class="game-title">SUDOKU</h2>
+                <a href="/SODOKUMINIGAME/sodokuminigame.html" class="play-btn" data-game-link="sudoku">PLAY</a>
             </div>
         </main>
 
@@ -603,7 +790,7 @@
         <section class="about">
             <h2>ABOUT</h2>
             <p>MINIMAL RETRO ARCADE IN PURE BLACK & WHITE<br><br>
-            10 GAMES. ZERO NOISE. PURE FOCUS.</p>
+            20 GAMES. ZERO NOISE. PURE FOCUS.</p>
         </section>
 
         <!-- Footer -->
@@ -623,14 +810,25 @@
         // Audio context and sounds
         let audioContext;
         let soundEnabled = true;
+        let musicEnabled = true;
         let crtMode = false;
         let invertMode = false;
         let pureMode = false;
+        const bgMusic = document.getElementById('bgMusic');
 
         // Initialize audio
         function initAudio() {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // Try to play music (will fail without user interaction)
+            try {
+                bgMusic.volume = 0.3;
+                if (musicEnabled) {
+                    bgMusic.play().catch(e => console.log("Audio play failed:", e));
+                }
+            } catch (e) {
+                console.log("Audio initialization error:", e);
             }
         }
 
@@ -698,6 +896,18 @@
             this.classList.toggle('active', soundEnabled);
             playBeep(600, 150);
             vibrate(30);
+        });
+
+        document.getElementById('musicToggle').addEventListener('click', function() {
+            musicEnabled = !musicEnabled;
+            this.classList.toggle('active', musicEnabled);
+            if (musicEnabled) {
+                bgMusic.play().catch(e => console.log("Audio play failed:", e));
+            } else {
+                bgMusic.pause();
+            }
+            playBeep(700, 100);
+            vibrate(20);
         });
 
         // Game card interactions
@@ -784,6 +994,41 @@
                 focusableElements[prevIndex].focus();
                 playBeep(250, 25);
             }
+
+
+
+
+
+            // Audio variables
+let musicEnabled = true;
+const bgMusic = document.getElementById('bgMusic');
+
+// Initialize music (call this after user interaction)
+function initAudio() {
+  bgMusic.volume = 0.3; // Set volume to 30%
+  if (musicEnabled) {
+    bgMusic.play().catch(e => console.log("Audio requires user interaction first"));
+  }
+}
+
+// Music toggle handler
+document.getElementById('musicToggle').addEventListener('click', function() {
+  musicEnabled = !musicEnabled;
+  this.classList.toggle('active', musicEnabled);
+  if (musicEnabled) {
+    bgMusic.play();
+  } else {
+    bgMusic.pause();
+  }
+  playBeep(700, 100); // Optional sound feedback
+});
+
+// Start audio on first user interaction
+document.addEventListener('click', initAudio, { once: true });
+document.addEventListener('touchstart', initAudio, { once: true });
+
+
+
         });
     </script>
 </body>

@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slide the Blocks: The Pixel Grid</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+            image-rendering: pixelated;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(255,255,255,0.02) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(255,255,255,0.01) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255,255,255,0.03) 2px,
+                rgba(255,255,255,0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 2;
+            animation: scanlines 2s linear infinite;
+        }
+        
+        @keyframes scanlines {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+        
+        @keyframes glitch {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-2px); }
+            40% { transform: translateX(2px); }
+            60% { transform: translateX(-1px); }
+            80% { transform: translateX(1px); }
+        }
+        
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        @keyframes slideIn {
+            from { 
+                transform: scale(0.8) translateY(20px);
+                opacity: 0;
+            }
+            to { 
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes blockMove {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes clickRipple {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes shardFly {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--shard-x), var(--shard-y)) scale(0);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes levelComplete {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Start Screen Styles */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #instructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+            font-family: 'Courier New', monospace;
+            max-width: 500px;
+        }
+        
+        .container {
+            position: relative;
+            z-index: 3;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .game-container {
+            display: none;
+            max-width: 1200px;
+            width: 100%;
+            animation: slideIn 0.8s ease-out;
+        }
+        
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .game-title {
+            font-size: clamp(1.2rem, 3vw, 1.6rem);
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+        }
+        
+        .difficulty-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .difficulty-btn {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            color: #888;
+            padding: 6px 12px;
+            font-family: inherit;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .difficulty-btn.active {
+            background: #333;
+            border-color: #555;
+            color: #ccc;
+        }
+        
+        .game-main {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .game-grid-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            background: #1a1a1a;
+            padding: 8px;
+            border: 1px solid #333;
+            margin-bottom: 15px;
+        }
+        
+        .grid-cell {
+            width: 65px;
+            height: 65px;
+            background: #111;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            user-select: none;
+            position: relative;
+        }
+        
+        .grid-cell.has-number {
+            background: #333;
+            color: #ccc;
+        }
+        
+        .grid-cell.has-number:hover {
+            background: #444;
+            color: #fff;
+        }
+        
+        .grid-cell.empty {
+            background: #0a0a0a;
+        }
+        
+        .grid-cell.moving {
+            animation: blockMove 0.3s ease;
+        }
+        
+        .click-ripple {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: clickRipple 0.6s ease-out;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .shard {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.8);
+            pointer-events: none;
+            z-index: 10;
+            animation: shardFly 0.8s ease-out;
+        }
+        
+        .game-info {
+            background: #111;
+            border: 1px solid #333;
+            padding: 15px;
+            width: 250px;
+            height: fit-content;
+            align-self: flex-start;
+        }
+        
+        .info-section {
+            margin-bottom: 15px;
+        }
+        
+        .info-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #ccc;
+        }
+        
+        .level-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .level-btn {
+            background: #222;
+            border: 1px solid #444;
+            color: #ccc;
+            width: 20px;
+            height: 20px;
+            font-family: inherit;
+            font-size: 0.6rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .level-btn:hover {
+            background: #333;
+        }
+        
+        .level-display {
+            min-width: 30px;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 400;
+            color: #ccc;
+        }
+        
+        .level-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .btn {
+            background: #222;
+            border: 1px solid #444;
+            color: #ccc;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 3px;
+        }
+        
+        .btn:hover {
+            background: #333;
+            border-color: #666;
+            color: #fff;
+        }
+        
+        .message-bar {
+            text-align: center;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .message {
+            font-size: 0.7rem;
+            font-weight: 400;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .message.win {
+            color: #fff;
+            animation: levelComplete 1s ease-in-out;
+        }
+        
+        .message.error {
+            color: #fff;
+            animation: glitch 0.5s ease-in-out;
+        }
+        
+        .hint-display {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 0.7rem;
+            color: #888;
+        }
+        
+        @media (max-width: 768px) {
+            .game-main {
+                flex-direction: center;
+                align-items: center;
+            }
+            
+            .game-info {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .grid-cell {
+                width: 55px;
+                height: 55px;
+                font-size: 1rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .grid-cell {
+                width: 50px;
+                height: 50px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="startScreen">
+        <h1 id="gameTitle">SLIDE THE BLOCKS</h1>
+        <button id="startBtn" onclick="startGame()">START</button>
+        <div id="instructions">
+            Slide numbered blocks to arrange them in order<br>
+            Use arrow keys or click to move blocks<br>
+            Arrange numbers 1-15 in sequential order<br>
+            Empty space allows blocks to slide
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Game Container -->
+        <div class="game-container" id="gameContainer">
+            <div class="game-header">
+                <h1 class="game-title">SLIDE THE BLOCKS</h1>
+                
+                <div class="difficulty-selector">
+                    <button class="difficulty-btn active" onclick="setDifficulty('easy')">EASY</button>
+                    <button class="difficulty-btn" onclick="setDifficulty('medium')">MEDIUM</button>
+                    <button class="difficulty-btn" onclick="setDifficulty('hard')">HARD</button>
+                </div>
+            </div>
+
+            <div class="game-main">
+                <div class="game-grid-container">
+                    <div class="game-grid" id="gameGrid"></div>
+                    
+                    <div class="controls">
+                        <button class="btn" onclick="shuffleGrid()">NEW GAME</button>
+                        <button class="btn" onclick="useHint()">HINT (<span id="hintCount">3</span>)</button>
+                        <button class="btn" onclick="toggleSound()">SOUND: <span id="soundStatus">ON</span></button>
+                    </div>
+                </div>
+
+                <div class="game-info">
+                    <div class="info-section">
+                        <div class="info-title">MOVES</div>
+                        <div class="info-value" id="moveCount">0</div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="info-title">TIME</div>
+                        <div class="info-value" id="timeElapsed">00:00</div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="info-title">LEVEL</div>
+                        <div class="level-selector">
+                            <button class="level-btn" onclick="changeLevel(-1)">◀</button>
+                            <div class="level-display" id="currentLevel">1</div>
+                            <button class="level-btn" onclick="changeLevel(1)">▶</button>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="info-title">DIFFICULTY</div>
+                        <div class="info-value" id="currentDifficulty">EASY</div>
+                    </div>
+                    
+                    <div class="hint-display" id="hintDisplay" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="message-bar">
+                <div class="message" id="messageDisplay"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            grid: [],
+            emptyPos: {x: 3, y: 3},
+            moves: 0,
+            startTime: null,
+            gameTimer: null,
+            currentLevel: 1,
+            difficulty: 'easy',
+            hintsRemaining: 3,
+            soundEnabled: true,
+            maxLevel: {easy: 5, medium: 8, hard: 12}
+        };
+
+        // Audio context for sound effects
+        let audioContext;
+
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(frequency, duration, type = 'square') {
+            if (!gameState.soundEnabled) return;
+            
+            initAudio();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block';
+            initializeGame();
+        }
+
+        function initializeGame() {
+            createGrid();
+            shuffleGrid();
+            startTimer();
+            updateDisplay();
+        }
+
+        function createGrid() {
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < 16; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.addEventListener('click', () => handleCellClick(i));
+                grid.appendChild(cell);
+            }
+        }
+
+        function generateLevel(level, difficulty) {
+            // Create solved state
+            let numbers = [];
+            for (let i = 1; i <= 15; i++) {
+                numbers.push(i);
+            }
+            numbers.push(0); // Empty space
+            
+            // Shuffle based on difficulty and level
+            let shuffleCount = 50; // Base shuffle count
+            
+            switch (difficulty) {
+                case 'easy':
+                    shuffleCount = 30 + (level * 5);
+                    break;
+                case 'medium':
+                    shuffleCount = 60 + (level * 8);
+                    break;
+                case 'hard':
+                    shuffleCount = 100 + (level * 12);
+                    break;
+            }
+            
+            // Perform valid moves to shuffle
+            let grid = [...numbers];
+            let emptyPos = {x: 3, y: 3};
+            
+            for (let i = 0; i < shuffleCount; i++) {
+                const validMoves = getValidMoves(emptyPos);
+                if (validMoves.length > 0) {
+                    const randomMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+                    const emptyIndex = emptyPos.y * 4 + emptyPos.x;
+                    const moveIndex = randomMove.y * 4 + randomMove.x;
+                    
+                    // Swap
+                    [grid[emptyIndex], grid[moveIndex]] = [grid[moveIndex], grid[emptyIndex]];
+                    emptyPos = randomMove;
+                }
+            }
+            
+            return {grid, emptyPos};
+        }
+
+        function getValidMoves(emptyPos) {
+            const moves = [];
+            const directions = [
+                {x: 0, y: -1}, // Up
+                {x: 0, y: 1},  // Down
+                {x: -1, y: 0}, // Left
+                {x: 1, y: 0}   // Right
+            ];
+            
+            directions.forEach(dir => {
+                const newX = emptyPos.x + dir.x;
+                const newY = emptyPos.y + dir.y;
+                
+                if (newX >= 0 && newX < 4 && newY >= 0 && newY < 4) {
+                    moves.push({x: newX, y: newY});
+                }
+            });
+            
+            return moves;
+        }
+
+        function shuffleGrid() {
+            const levelData = generateLevel(gameState.currentLevel, gameState.difficulty);
+            gameState.grid = levelData.grid;
+            gameState.emptyPos = levelData.emptyPos;
+            gameState.moves = 0;
+            gameState.hintsRemaining = 3;
+            
+            resetTimer();
+            startTimer();
+            updateDisplay();
+            showMessage('');
+        }
+
+        function handleCellClick(index) {
+            const x = index % 4;
+            const y = Math.floor(index / 4);
+            const cell = document.querySelectorAll('.grid-cell')[index];
+            
+            // Add click effects
+            createClickEffects(cell);
+            
+            if (canMove(x, y)) {
+                makeMove(x, y);
+            } else {
+                playSound(150, 0.2, 'sawtooth');
+                showMessage('Invalid move!', 'error');
+                setTimeout(() => showMessage(''), 1000);
+            }
+        }
+        
+        function createClickEffects(cell) {
+            // Create ripple effect
+            const ripple = document.createElement('div');
+            ripple.className = 'click-ripple';
+            cell.appendChild(ripple);
+            
+            // Remove ripple after animation
+            setTimeout(() => {
+                if (ripple.parentNode) {
+                    ripple.parentNode.removeChild(ripple);
+                }
+            }, 600);
+            
+            // Create shard effects
+            createShardEffects(cell);
+        }
+        
+        function createShardEffects(cell) {
+            const cellRect = cell.getBoundingClientRect();
+            const centerX = cellRect.left + cellRect.width / 2;
+            const centerY = cellRect.top + cellRect.height / 2;
+            
+            // Create 6-8 shards
+            const shardCount = 6 + Math.floor(Math.random() * 3);
+            
+            for (let i = 0; i < shardCount; i++) {
+                const shard = document.createElement('div');
+                shard.className = 'shard';
+                
+                // Random direction and distance
+                const angle = (Math.PI * 2 * i) / shardCount + (Math.random() - 0.5) * 0.5;
+                const distance = 30 + Math.random() * 40;
+                const deltaX = Math.cos(angle) * distance;
+                const deltaY = Math.sin(angle) * distance;
+                
+                // Set CSS custom properties for animation
+                shard.style.setProperty('--shard-x', deltaX + 'px');
+                shard.style.setProperty('--shard-y', deltaY + 'px');
+                
+                // Position shard at cell center
+                shard.style.left = centerX + 'px';
+                shard.style.top = centerY + 'px';
+                
+                // Add random size variation
+                const size = 1 + Math.random() * 2;
+                shard.style.width = size + 'px';
+                shard.style.height = size + 'px';
+                
+                document.body.appendChild(shard);
+                
+                // Remove shard after animation
+                setTimeout(() => {
+                    if (shard.parentNode) {
+                        shard.parentNode.removeChild(shard);
+                    }
+                }, 800);
+            }
+        }
+
+        function canMove(x, y) {
+            const dx = Math.abs(x - gameState.emptyPos.x);
+            const dy = Math.abs(y - gameState.emptyPos.y);
+            return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
+        }
+
+        function makeMove(x, y) {
+            const emptyIndex = gameState.emptyPos.y * 4 + gameState.emptyPos.x;
+            const moveIndex = y * 4 + x;
+            
+            // Swap the values
+            [gameState.grid[emptyIndex], gameState.grid[moveIndex]] = 
+            [gameState.grid[moveIndex], gameState.grid[emptyIndex]];
+            
+            // Update empty position
+            gameState.emptyPos = {x, y};
+            gameState.moves++;
+            
+            // Add animation
+            const cells = document.querySelectorAll('.grid-cell');
+            cells[moveIndex].classList.add('moving');
+            setTimeout(() => cells[moveIndex].classList.remove('moving'), 300);
+            
+            playSound(440, 0.1, 'sine');
+            updateDisplay();
+            
+            if (checkWin()) {
+                handleWin();
+            }
+        }
+
+        function checkWin() {
+            for (let i = 0; i < 15; i++) {
+                if (gameState.grid[i] !== i + 1) {
+                    return false;
+                }
+            }
+            return gameState.grid[15] === 0;
+        }
+
+        function handleWin() {
+            clearInterval(gameState.gameTimer);
+            playSound(523, 0.3, 'sine');
+            setTimeout(() => playSound(659, 0.3, 'sine'), 200);
+            setTimeout(() => playSound(784, 0.5, 'sine'), 400);
+            
+            showMessage('Level Complete!', 'win');
+            
+            setTimeout(() => {
+                if (gameState.currentLevel < gameState.maxLevel[gameState.difficulty]) {
+                    gameState.currentLevel++;
+                    shuffleGrid();
+                    showMessage('Next Level!');
+                } else {
+                    showMessage('All Levels Complete!', 'win');
+                }
+            }, 2000);
+        }
+
+        function updateDisplay() {
+            const cells = document.querySelectorAll('.grid-cell');
+            
+            gameState.grid.forEach((value, index) => {
+                const cell = cells[index];
+                if (value === 0) {
+                    cell.textContent = '';
+                    cell.className = 'grid-cell empty';
+                } else {
+                    cell.textContent = value;
+                    cell.className = 'grid-cell has-number';
+                }
+            });
+            
+            document.getElementById('moveCount').textContent = gameState.moves;
+            document.getElementById('currentLevel').textContent = gameState.currentLevel;
+            document.getElementById('currentDifficulty').textContent = gameState.difficulty.toUpperCase();
+            document.getElementById('hintCount').textContent = gameState.hintsRemaining;
+        }
+
+        function startTimer() {
+            gameState.startTime = Date.now();
+            gameState.gameTimer = setInterval(updateTimer, 1000);
+        }
+
+        function resetTimer() {
+            if (gameState.gameTimer) {
+                clearInterval(gameState.gameTimer);
+            }
+            gameState.startTime = null;
+            document.getElementById('timeElapsed').textContent = '00:00';
+        }
+
+        function updateTimer() {
+            if (gameState.startTime) {
+                const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+                const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const seconds = (elapsed % 60).toString().padStart(2, '0');
+                document.getElementById('timeElapsed').textContent = `${minutes}:${seconds}`;
+            }
+        }
+
+        function setDifficulty(difficulty) {
+            document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            gameState.difficulty = difficulty;
+            gameState.currentLevel = 1;
+            shuffleGrid();
+        }
+
+        function changeLevel(direction) {
+            const newLevel = gameState.currentLevel + direction;
+            const maxLevel = gameState.maxLevel[gameState.difficulty];
+            
+            if (newLevel >= 1 && newLevel <= maxLevel) {
+                gameState.currentLevel = newLevel;
+                shuffleGrid();
+                playSound(330, 0.1, 'triangle');
+            }
+        }
+
+        function useHint() {
+            if (gameState.hintsRemaining > 0) {
+                gameState.hintsRemaining--;
+                
+                // Find a valid move
+                const validMoves = getValidMoves(gameState.emptyPos);
+                if (validMoves.length > 0) {
+                    const randomMove = validMoves[0];
+                    const hintDisplay = document.getElementById('hintDisplay');
+                    hintDisplay.style.display = 'block';
+                    hintDisplay.textContent = `HINT: Move block at position (${randomMove.x + 1}, ${randomMove.y + 1})`;
+                    
+                    setTimeout(() => {
+                        hintDisplay.style.display = 'none';
+                    }, 3000);
+                    
+                    playSound(880, 0.2, 'triangle');
+                }
+                updateDisplay();
+            } else {
+                showMessage('No hints remaining!', 'error');
+                setTimeout(() => showMessage(''), 1000);
+            }
+        }
+
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            document.getElementById('soundStatus').textContent = gameState.soundEnabled ? 'ON' : 'OFF';
+            
+            if (gameState.soundEnabled) {
+                playSound(440, 0.1, 'sine');
+            }
+        }
+
+        function showMessage(text, type = '') {
+            const messageEl = document.getElementById('messageDisplay');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('gameContainer').style.display === 'none') return;
+            
+            let targetX = gameState.emptyPos.x;
+            let targetY = gameState.emptyPos.y;
+            
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    targetY++;
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    targetY--;
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    targetX++;
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    targetX--;
+                    break;
+                case 'Enter':
+                case ' ':
+                    shuffleGrid();
+                    return;
+                case 'h':
+                case 'H':
+                    useHint();
+                    return;
+                default:
+                    return;
+            }
+            
+            e.preventDefault();
+            
+            // Check if the target position is valid and has a block
+            if (targetX >= 0 && targetX < 4 && targetY >= 0 && targetY < 4) {
+                if (canMove(targetX, targetY)) {
+                    makeMove(targetX, targetY);
+                }
+            }
+        });
+
+        // Prevent context menu on right click for better mobile experience
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // Touch/swipe support for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const minSwipeDistance = 50;
+            
+            if (Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
+                return;
+            }
+            
+            let targetX = gameState.emptyPos.x;
+            let targetY = gameState.emptyPos.y;
+            
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Horizontal swipe
+                if (deltaX > 0) {
+                    // Swipe right - move empty space left (block moves right)
+                    targetX--;
+                } else {
+                    // Swipe left - move empty space right (block moves left)
+                    targetX++;
+                }
+            } else {
+                // Vertical swipe
+                if (deltaY > 0) {
+                    // Swipe down - move empty space up (block moves down)
+                    targetY--;
+                } else {
+                    // Swipe up - move empty space down (block moves up)
+                    targetY++;
+                }
+            }
+            
+            if (targetX >= 0 && targetX < 4 && targetY >= 0 && targetY < 4) {
+                if (canMove(targetX, targetY)) {
+                    makeMove(targetX, targetY);
+                }
+            }
+        }
+
+        // Initialize the game when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up initial audio context on first user interaction
+            document.addEventListener('click', initAudio, { once: true });
+            document.addEventListener('keydown', initAudio, { once: true });
+        });
+    </script>
+</body>
+</html>

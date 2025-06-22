@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DON'T FLINCH!</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Orbitron', monospace;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        /* New start screen styles (matches 2048 style) */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #instructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            text-align: center;
+        }
+        
+        .game-screen {
+            display: none;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .face {
+            width: clamp(150px, 25vw, 250px);
+            height: clamp(150px, 25vw, 250px);
+            margin: 0 auto 3rem;
+            position: relative;
+            transition: all 0.1s;
+        }
+        
+        .face-normal {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #fff;
+            position: relative;
+            background: #000;
+        }
+        
+        .eyes {
+            position: absolute;
+            top: 40%;
+            left: 30%;
+            width: 40%;
+            height: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .eye {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            animation: blink 5s infinite;
+        }
+        
+        .mouth {
+            position: absolute;
+            bottom: 35%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 2px;
+            background: #fff;
+        }
+        
+        .instruction {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+        
+        .timer {
+            font-size: clamp(0.8rem, 2vw, 1rem);
+            opacity: 0.6;
+        }
+        
+        .result-screen {
+            display: none;
+            text-align: center;
+        }
+        
+        .result-title {
+            font-size: clamp(2rem, 6vw, 4rem);
+            margin-bottom: 2rem;
+            font-weight: 900;
+        }
+        
+        .result-message {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            margin-bottom: 3rem;
+            opacity: 0.8;
+        }
+        
+        .play-again-btn {
+            background: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 0.8rem 2rem;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.1em;
+        }
+        
+        .play-again-btn:hover {
+            background: #fff;
+            color: #000;
+        }
+        
+        /* Tension building effects */
+        .tension-1 { animation: subtle-shake 0.1s infinite; }
+        .tension-2 { animation: medium-shake 0.1s infinite; filter: contrast(1.2); }
+        .tension-3 { animation: strong-shake 0.1s infinite; filter: contrast(1.5) brightness(1.1); }
+        
+        /* Jumpscare effects */
+        .jumpscare {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #fff;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: jumpscare-flash 0.5s;
+        }
+        
+        .jumpscare-face {
+            width: 60vmin;
+            height: 60vmin;
+            background: #000;
+            border: 4px solid #fff;
+            position: relative;
+            animation: jumpscare-zoom 0.5s;
+        }
+        
+        .jumpscare-eyes {
+            position: absolute;
+            top: 35%;
+            left: 25%;
+            width: 50%;
+            height: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .jumpscare-eye {
+            width: 16px;
+            height: 16px;
+            background: #fff;
+        }
+        
+        .jumpscare-mouth {
+            position: absolute;
+            bottom: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 8px;
+            background: #fff;
+        }
+        
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes blink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95% { transform: scaleY(0.1); }
+        }
+        
+        @keyframes subtle-shake {
+            0%, 100% { transform: translate(0); }
+            25% { transform: translate(-1px, 1px); }
+            75% { transform: translate(1px, -1px); }
+        }
+        
+        @keyframes medium-shake {
+            0%, 100% { transform: translate(0); }
+            25% { transform: translate(-2px, 2px); }
+            75% { transform: translate(2px, -2px); }
+        }
+        
+        @keyframes strong-shake {
+            0%, 100% { transform: translate(0); }
+            25% { transform: translate(-3px, 3px); }
+            75% { transform: translate(3px, -3px); }
+        }
+        
+        @keyframes jumpscare-flash {
+            0% { background: #000; }
+            10% { background: #fff; }
+            20% { background: #000; }
+            30% { background: #fff; }
+            40% { background: #000; }
+            50% { background: #fff; }
+            100% { background: #fff; }
+        }
+        
+        @keyframes jumpscare-zoom {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .glitch {
+            animation: glitch-effect 0.1s infinite;
+        }
+        
+        @keyframes glitch-effect {
+            0% { transform: translate(0); filter: hue-rotate(0deg); }
+            20% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); }
+            40% { transform: translate(-2px, -2px); filter: hue-rotate(180deg); }
+            60% { transform: translate(2px, 2px); filter: hue-rotate(270deg); }
+            80% { transform: translate(2px, -2px); filter: hue-rotate(360deg); }
+            100% { transform: translate(0); filter: hue-rotate(0deg); }
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .face { width: 60vw; height: 60vw; }
+        }
+    </style>
+</head>
+<body>
+    <!-- New start screen (matches 2048 style) -->
+    <div id="startScreen">
+        <h1 id="gameTitle">DON'T FLINCH!</h1>
+        <button id="startBtn">START</button>
+        <div id="instructions">
+            Stare at the face. Don't look away.<br>
+            Don't blink. Don't move.<br>
+            Can you survive the jumpscare?
+        </div>
+    </div>
+
+    <div class="game-container">
+        <!-- Game Screen -->
+        <div class="game-screen" id="gameScreen">
+            <div class="face" id="face">
+                <div class="face-normal">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                    <div class="mouth"></div>
+                </div>
+            </div>
+            <p class="instruction" id="instruction">Keep staring... Don't look away...</p>
+            <p class="timer" id="timer">Time: 0s</p>
+        </div>
+        
+        <!-- Result Screen -->
+        <div class="result-screen" id="resultScreen">
+            <h2 class="result-title" id="resultTitle">💀 YOU FLINCHED!</h2>
+            <p class="result-message" id="resultMessage">Your mouse jumped right out of your hand!</p>
+            <button class="play-again-btn" onclick="resetGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+    
+    <script>
+        let gameState = 'start';
+        let gameTimer;
+        let startTime;
+        let jumpscareTime;
+        let tensionLevel = 0;
+        let playerFlinched = false;
+        let flinchDetected = false;
+        
+        // Audio context for jumpscare sound
+        let audioContext;
+        let jumpscareSound;
+        
+        // Initialize audio
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                createJumpscareSound();
+            } catch(e) {
+                console.log('Audio not supported');
+            }
+        }
+        
+        // Create jumpscare sound effect
+        function createJumpscareSound() {
+            jumpscareSound = () => {
+                if (!audioContext) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Create a harsh, distorted sound
+                oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(800, audioContext.currentTime + 0.1);
+                oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.3);
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                
+                oscillator.type = 'sawtooth';
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            };
+        }
+        
+        function startGame() {
+            // Initialize audio on first user interaction
+            if (!audioContext) {
+                initAudio();
+            }
+            
+            gameState = 'playing';
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            document.getElementById('resultScreen').style.display = 'none';
+            
+            startTime = Date.now();
+            playerFlinched = false;
+            flinchDetected = false;
+            tensionLevel = 0;
+            
+            // Set random jumpscare time (15-45 seconds)
+            jumpscareTime = startTime + (15000 + Math.random() * 30000);
+            
+            // Start game loop
+            gameLoop();
+            
+            // Add event listeners for flinch detection
+            document.addEventListener('click', detectFlinch);
+            document.addEventListener('keydown', detectFlinch);
+            document.addEventListener('mousemove', detectMouseMove);
+        }
+        
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+            
+            const currentTime = Date.now();
+            const elapsed = (currentTime - startTime) / 1000;
+            
+            // Update timer
+            document.getElementById('timer').textContent = `Time: ${Math.floor(elapsed)}s`;
+            
+            // Build tension over time
+            const progress = (currentTime - startTime) / (jumpscareTime - startTime);
+            
+            if (progress > 0.3 && tensionLevel < 1) {
+                tensionLevel = 1;
+                document.getElementById('face').className = 'face tension-1';
+                document.getElementById('instruction').textContent = 'Something feels... different...';
+            } else if (progress > 0.6 && tensionLevel < 2) {
+                tensionLevel = 2;
+                document.getElementById('face').className = 'face tension-2';
+                document.getElementById('instruction').textContent = 'Why are you still here?';
+            } else if (progress > 0.8 && tensionLevel < 3) {
+                tensionLevel = 3;
+                document.getElementById('face').className = 'face tension-3 glitch';
+                document.getElementById('instruction').textContent = 'GET OUT GET OUT GET OUT';
+            }
+            
+            // Check if it's time for jumpscare
+            if (currentTime >= jumpscareTime) {
+                triggerJumpscare();
+                return;
+            }
+            
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function triggerJumpscare() {
+            gameState = 'jumpscare';
+            
+            // Play jumpscare sound
+            if (jumpscareSound) {
+                jumpscareSound();
+            }
+            
+            // Create jumpscare visual
+            const jumpscareDiv = document.createElement('div');
+            jumpscareDiv.className = 'jumpscare';
+            jumpscareDiv.innerHTML = `
+                <div class="jumpscare-face">
+                    <div class="jumpscare-eyes">
+                        <div class="jumpscare-eye"></div>
+                        <div class="jumpscare-eye"></div>
+                    </div>
+                    <div class="jumpscare-mouth"></div>
+                </div>
+            `;
+            
+            document.body.appendChild(jumpscareDiv);
+            
+            // Make screen shake
+            document.body.style.animation = 'strong-shake 0.5s';
+            
+            // Remove jumpscare after a moment and show results
+            setTimeout(() => {
+                jumpscareDiv.remove();
+                document.body.style.animation = '';
+                showResults();
+            }, 1000);
+        }
+        
+        function detectFlinch(event) {
+            if (gameState === 'playing' && !flinchDetected) {
+                playerFlinched = true;
+                flinchDetected = true;
+            }
+        }
+        
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        let mouseMoveThreshold = 50;
+        
+        function detectMouseMove(event) {
+            if (gameState === 'playing' && !flinchDetected) {
+                const deltaX = Math.abs(event.clientX - lastMouseX);
+                const deltaY = Math.abs(event.clientY - lastMouseY);
+                
+                if (deltaX > mouseMoveThreshold || deltaY > mouseMoveThreshold) {
+                    playerFlinched = true;
+                    flinchDetected = true;
+                }
+                
+                lastMouseX = event.clientX;
+                lastMouseY = event.clientY;
+            }
+        }
+        
+        function showResults() {
+            gameState = 'result';
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
+            
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            
+            if (playerFlinched) {
+                const reactions = [
+                    { title: '■ YOU FLINCHED!', message: 'Your mouse jumped right out of your hand!' },
+                    { title: '▲ GOTCHA!', message: 'Did you just throw your phone?' },
+                    { title: '● CHICKEN!', message: 'I saw that jump!' },
+                    { title: '◆ SCARED?', message: 'Your neighbors heard that scream!' }
+                ];
+                const reaction = reactions[Math.floor(Math.random() * reactions.length)];
+                resultTitle.textContent = reaction.title;
+                resultMessage.textContent = reaction.message;
+            } else {
+                const braveMsgs = [
+                    { title: '▪ STONE COLD', message: 'Nothing can scare you!' },
+                    { title: '▲ FEARLESS', message: 'You have nerves of steel!' },
+                    { title: '■ CHAMPION', message: 'The face of courage!' }
+                ];
+                const msg = braveMsgs[Math.floor(Math.random() * braveMsgs.length)];
+                resultTitle.textContent = msg.title;
+                resultMessage.textContent = msg.message;
+            }
+            
+            // Remove event listeners
+            document.removeEventListener('click', detectFlinch);
+            document.removeEventListener('keydown', detectFlinch);
+            document.removeEventListener('mousemove', detectMouseMove);
+        }
+        
+        function resetGame() {
+            gameState = 'start';
+            document.getElementById('resultScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+            
+            // Reset face appearance
+            document.getElementById('face').className = 'face';
+            document.getElementById('instruction').textContent = 'Keep staring... Don\'t look away...';
+        }
+        
+        // Prevent context menu and selection
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('selectstart', e => e.preventDefault());
+        
+        // Add start button event listener
+        document.getElementById('startBtn').addEventListener('click', startGame);
+    </script>
+</body>
+</html>

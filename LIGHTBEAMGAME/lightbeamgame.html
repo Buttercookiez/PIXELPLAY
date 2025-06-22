@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIGHTBEAM REDIRECT: THE PIXEL LASER PUZZLE</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            color: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            overflow: hidden;
+        }
+
+        /* New start screen styles */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #instructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Original game styles below */
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 255, 255, 0.03) 2px,
+                rgba(255, 255, 255, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><defs><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.9"/><feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0"/></filter></defs><rect width="100%" height="100%" filter="url(%23noise)"/></svg>');
+            pointer-events: none;
+            z-index: 999;
+            animation: noise-flicker 0.2s infinite;
+        }
+        
+        @keyframes noise-flicker {
+            0%, 100% { opacity: 0.02; }
+            50% { opacity: 0.05; }
+        }
+        
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 500;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            opacity: 0.3;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.1; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 0.3; }
+        }
+        
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .menu::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: menu-sweep 3s ease-in-out infinite;
+        }
+        
+        @keyframes menu-sweep {
+            0%, 100% { left: -100%; }
+            50% { left: 100%; }
+        }
+        
+        .menu-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin: 10px 0;
+            position: relative;
+        }
+        
+        .menu-section label {
+            font-size: 14px;
+            color: #ccc;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+        
+        .menu-controls {
+            display: flex;
+            gap: 12px;
+        }
+        
+        button, select {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            padding: 12px 24px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            image-rendering: pixelated;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        
+        button::before, select::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        button:hover, select:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+            box-shadow: 
+                0 0 10px rgba(255, 255, 255, 0.5),
+                inset 0 0 10px rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        button:hover::before, select:hover::before {
+            left: 100%;
+        }
+        
+        select {
+            padding: 10px 20px;
+            background: #000;
+        }
+        
+        .game-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .status {
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+            animation: status-pulse 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes status-pulse {
+            from { text-shadow: 0 0 10px rgba(255, 255, 255, 0.6); }
+            to { text-shadow: 0 0 15px rgba(255, 255, 255, 0.9); }
+        }
+        
+        .game-controls {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .game-controls button {
+            padding: 10px 18px;
+            font-size: 12px;
+        }
+        
+        .grid-container {
+            position: relative;
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.2),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .grid {
+            display: grid;
+            gap: 3px;
+            background: #111;
+            padding: 3px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+        }
+        
+        .cell {
+            width: 45px;
+            height: 45px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            position: relative;
+            image-rendering: pixelated;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+        
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.05);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .cell:hover::before {
+            opacity: 1;
+        }
+        
+        .cell.wall {
+            background: #333;
+            color: #666;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+        
+        .cell.goal {
+            background: radial-gradient(circle, #0a0a0a 30%, #222 70%);
+            color: white;
+            animation: goal-pulse 1.5s ease-in-out infinite alternate;
+            position: relative;
+        }
+        
+        .cell.goal::before {
+            content: '◆';
+            position: absolute;
+            font-size: 18px;
+            animation: goal-spin 3s linear infinite;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+        
+        .cell.goal::after {
+            content: '◇';
+            position: absolute;
+            font-size: 14px;
+            animation: goal-spin 2s linear infinite reverse;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.6);
+        }
+        
+        @keyframes goal-pulse {
+            from { 
+                box-shadow: 
+                    0 0 10px rgba(255, 255, 255, 0.5),
+                    inset 0 0 10px rgba(255, 255, 255, 0.2);
+            }
+            to { 
+                box-shadow: 
+                    0 0 20px rgba(255, 255, 255, 0.8),
+                    inset 0 0 15px rgba(255, 255, 255, 0.4);
+            }
+        }
+        
+        @keyframes goal-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .cell.trap {
+            background: radial-gradient(circle, #0a0a0a 50%, #333 100%);
+            color: #666;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .cell.trap::before {
+            content: '✖';
+            position: absolute;
+            animation: trap-flicker 1s ease-in-out infinite alternate;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        @keyframes trap-flicker {
+            from { opacity: 0.4; color: #666; }
+            to { opacity: 0.8; color: #999; }
+        }
+        
+        .cell.mirror {
+            background: linear-gradient(135deg, #222 0%, #444 50%, #222 100%);
+            color: white;
+            cursor: pointer;
+            box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.1);
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .cell.mirror:hover {
+            box-shadow: 
+                inset 0 0 15px rgba(255, 255, 255, 0.2),
+                0 0 10px rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .cell.laser-start {
+            background: radial-gradient(circle, #1a1a1a 30%, #0a0a0a 70%);
+            color: white;
+            animation: laser-start-pulse 1s ease-in-out infinite alternate;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+        
+        @keyframes laser-start-pulse {
+            from { 
+                box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            }
+            to { 
+                box-shadow: 0 0 25px rgba(255, 255, 255, 0.9);
+                text-shadow: 0 0 15px rgba(255, 255, 255, 1);
+            }
+        }
+        
+        .beam {
+            position: absolute;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.9) 0%,
+                rgba(255, 255, 255, 1) 50%,
+                rgba(255, 255, 255, 0.9) 100%);
+            box-shadow: 
+                0 0 8px rgba(255, 255, 255, 0.8),
+                0 0 15px rgba(255, 255, 255, 0.5),
+                0 0 25px rgba(255, 255, 255, 0.3);
+            z-index: 15;
+            animation: beam-flow 0.8s ease-out, beam-glow 1s ease-in-out infinite alternate;
+        }
+        
+        .beam.horizontal {
+            height: 3px;
+            width: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .beam.vertical {
+            width: 3px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        @keyframes beam-flow {
+            from { 
+                opacity: 0; 
+                transform: scale(0.5); 
+            }
+            to { 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+        }
+        
+        @keyframes beam-glow {
+            from { 
+                box-shadow: 
+                    0 0 8px rgba(255, 255, 255, 0.8),
+                    0 0 15px rgba(255, 255, 255, 0.5),
+                    0 0 25px rgba(255, 255, 255, 0.3);
+            }
+            to { 
+                box-shadow: 
+                    0 0 12px rgba(255, 255, 255, 1),
+                    0 0 20px rgba(255, 255, 255, 0.7),
+                    0 0 35px rgba(255, 255, 255, 0.5);
+            }
+        }
+        
+        .shard {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            pointer-events: none;
+            z-index: 20;
+            opacity: 0;
+        }
+        
+        .shard.animate {
+            animation: shard-explosion 1s ease-out forwards;
+        }
+        
+        @keyframes shard-explosion {
+            0% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.2) rotate(720deg) translate(var(--dx), var(--dy));
+            }
+        }
+        
+        .instructions {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            max-width: 600px;
+            line-height: 1.6;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+        }
+        
+        .glitch {
+            animation: glitch-effect 0.6s ease-in-out;
+        }
+        
+        @keyframes glitch-effect {
+            0%, 100% { transform: translateX(0); filter: hue-rotate(0deg); }
+            10% { transform: translateX(-3px); filter: hue-rotate(90deg); }
+            20% { transform: translateX(3px); filter: hue-rotate(180deg); }
+            30% { transform: translateX(-2px); filter: hue-rotate(270deg); }
+            40% { transform: translateX(2px); filter: hue-rotate(360deg); }
+            50% { transform: translateX(-1px); filter: hue-rotate(180deg); }
+            60% { transform: translateX(1px); filter: hue-rotate(90deg); }
+            70% { transform: translateX(-2px); filter: hue-rotate(270deg); }
+            80% { transform: translateX(2px); filter: hue-rotate(0deg); }
+            90% { transform: translateX(-1px); filter: hue-rotate(180deg); }
+        }
+        
+        .flash {
+            animation: flash-screen 0.4s ease-in-out;
+        }
+        
+        @keyframes flash-screen {
+            0%, 100% { background: #0a0a0a; }
+            25% { background: #fff; }
+            50% { background: #0a0a0a; }
+            75% { background: #fff; }
+        }
+        
+        .winner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: white;
+            z-index: 2000;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 30px;
+            border: 1px solid white;
+            border-radius: 2px;
+        }
+        
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #ff5555;
+            z-index: 2000;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 30px;
+            border: 1px solid #ff5555;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <!-- New start screen -->
+    <div id="startScreen">
+        <h1 id="gameTitle">LIGHTBEAM</h1>
+        <button id="startBtn">Start</button>
+        <div id="instructions">
+            Use mirrors to redirect the laser beam<br>
+            Reach the goal to win<br>
+            Avoid traps that destroy the beam
+        </div>
+    </div>
+
+    <div class="scanlines"></div>
+    <div class="noise-overlay"></div>
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <div class="menu" id="menu">
+            <h1 class="title">LIGHTBEAM REDIRECT:<br>THE PIXEL LASER PUZZLE</h1>
+            
+            <div class="menu-section">
+                <label>GRID SIZE</label>
+                <div class="menu-controls">
+                    <select id="gridSize" style="background: #000;">
+                        <option value="5">5×5</option>
+                        <option value="7" selected>7×7</option>
+                        <option value="10">10×10</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="menu-section">
+                <label>DIFFICULTY</label>
+                <div class="menu-controls">
+                    <button onclick="setDifficulty('easy')">EASY</button>
+                    <button onclick="setDifficulty('medium')">MEDIUM</button>
+                    <button onclick="setDifficulty('hard')">HARD</button>
+                </div>
+            </div>
+            
+            <button onclick="startGame()" style="margin-top: 25px; font-size: 16px; padding: 15px 30px;">START GAME</button>
+            
+            <div class="instructions">
+                USE MIRRORS TO GUIDE THE BEAM.<br>
+                REACH THE GOAL. AVOID TRAPS.<br>
+                LEFT-CLICK TO PLACE MIRRORS. RIGHT-CLICK TO ROTATE.
+            </div>
+        </div>
+        
+        <div class="game-screen" id="gameScreen">
+            <div class="game-header">
+                <div class="status" id="status">BEAM READY</div>
+                <div class="game-controls">
+                    <button onclick="toggleSound()" id="soundBtn">SOUND: ON</button>
+                    <button onclick="restartLevel()">RESTART</button>
+                    <button onclick="backToMenu()">MENU</button>
+                </div>
+            </div>
+            
+            <div class="grid-container">
+                <div class="grid" id="grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            gridSize: 7,
+            difficulty: 'medium',
+            soundEnabled: true,
+            currentLevel: null,
+            laserPath: [],
+            isWon: false,
+            gameActive: true
+        };
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Initialize floating particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 3 + 's';
+                particle.style.animationDuration = (2 + Math.random() * 3) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        function createShardExplosion(x, y, count = 8) {
+            for (let i = 0; i < count; i++) {
+                const shard = document.createElement('div');
+                shard.className = 'shard';
+                shard.style.left = x + 'px';
+                shard.style.top = y + 'px';
+                
+                const angle = (i / count) * Math.PI * 2;
+                const distance = 50 + Math.random() * 30;
+                const dx = Math.cos(angle) * distance;
+                const dy = Math.sin(angle) * distance;
+                
+                shard.style.setProperty('--dx', dx + 'px');
+                shard.style.setProperty('--dy', dy + 'px');
+                
+                document.body.appendChild(shard);
+                
+                setTimeout(() => {
+                    shard.classList.add('animate');
+                }, 10);
+                
+                setTimeout(() => {
+                    shard.remove();
+                }, 1000);
+            }
+        }
+        
+        function playSound(frequency, duration, type = 'sine') {
+            if (!gameState.soundEnabled) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function setDifficulty(diff) {
+            gameState.difficulty = diff;
+            document.querySelectorAll('.menu-controls button').forEach(btn => {
+                btn.style.background = 'rgba(0, 0, 0, 0.8)';
+                btn.style.color = 'white';
+                btn.style.borderColor = 'rgba(255, 255, 255, 0.6)';
+            });
+            event.target.style.background = 'rgba(255, 255, 255, 0.1)';
+            event.target.style.color = 'white';
+            event.target.style.borderColor = 'white';
+            playSound(440, 0.1);
+        }
+
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            document.getElementById('soundBtn').textContent = `SOUND: ${gameState.soundEnabled ? 'ON' : 'OFF'}`;
+            if (gameState.soundEnabled) playSound(880, 0.1);
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            gameState.gridSize = parseInt(document.getElementById('gridSize').value);
+            gameState.gameActive = true;
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'flex';
+            generateLevel();
+            playSound(660, 0.2);
+        }
+
+        function backToMenu() {
+            gameState.gameActive = true;
+            document.getElementById('menu').style.display = 'flex';
+            document.getElementById('gameScreen').style.display = 'none';
+            clearBeam();
+            playSound(330, 0.2);
+        }
+
+        function generateLevel() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${gameState.gridSize}, 1fr)`;
+            
+            const level = createLevelLayout();
+            gameState.currentLevel = level;
+            
+            for (let i = 0; i < gameState.gridSize * gameState.gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.dataset.index = i;
+                
+                const row = Math.floor(i / gameState.gridSize);
+                const col = i % gameState.gridSize;
+                const cellType = level.grid[row][col];
+                
+                if (cellType === '█') {
+                    cell.classList.add('wall');
+                    cell.textContent = '█';
+                } else if (cellType === 'G') {
+                    cell.classList.add('goal');
+                } else if (cellType === '✖') {
+                    cell.classList.add('trap');
+                } else if (['→', '←', '↑', '↓'].includes(cellType)) {
+                    cell.classList.add('laser-start');
+                    cell.textContent = cellType;
+                }
+                
+                cell.addEventListener('click', () => placeMirror(row, col));
+                cell.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    rotateMirror(row, col);
+                });
+                
+                grid.appendChild(cell);
+            }
+            
+            updateStatus('BEAM READY');
+            setTimeout(simulateLaser, 500);
+        }
+
+        function createLevelLayout() {
+            const size = gameState.gridSize;
+            const grid = Array(size).fill().map(() => Array(size).fill('.'));
+            
+            const startSide = Math.floor(Math.random() * 4);
+            let laserStart = { row: 0, col: 0, direction: '→' };
+            
+            switch (startSide) {
+                case 0: 
+                    laserStart = { row: 0, col: Math.floor(size / 2), direction: '↓' };
+                    break;
+                case 1:  
+                    laserStart = { row: Math.floor(size / 2), col: size - 1, direction: '←' };
+                    break;
+                case 2: 
+                    laserStart = { row: size - 1, col: Math.floor(size / 2), direction: '↑' };
+                    break;
+                case 3: 
+                    laserStart = { row: Math.floor(size / 2), col: 0, direction: '→' };
+                    break;
+            }
+            
+            grid[laserStart.row][laserStart.col] = laserStart.direction;
+            
+            // Ensure the first 2 tiles in front of laser are not blocked
+            let nextRow = laserStart.row;
+            let nextCol = laserStart.col;
+            for (let i = 0; i < 2; i++) {
+                const nextPos = getNextPosition(nextRow, nextCol, laserStart.direction);
+                if (isValidPosition(nextPos.row, nextPos.col)) {
+                    grid[nextPos.row][nextPos.col] = '.'; // Force clear path
+                    nextRow = nextPos.row;
+                    nextCol = nextPos.col;
+                }
+            }
+            
+            // Place goal
+            let goalPlaced = false;
+            while (!goalPlaced) {
+                const row = Math.floor(Math.random() * size);
+                const col = Math.floor(Math.random() * size);
+                if (grid[row][col] === '.' && (Math.abs(row - laserStart.row) > 2 || Math.abs(col - laserStart.col) > 2)) {
+                    grid[row][col] = 'G';
+                    goalPlaced = true;
+                }
+            }
+            
+            // Add walls based on difficulty (but skip the protected tiles near start)
+            const wallCount = gameState.difficulty === 'easy' ? 3 : gameState.difficulty === 'medium' ? 5 : 8;
+            for (let i = 0; i < wallCount; i++) {
+                let wallPlaced = false;
+                let attempts = 0;
+                while (!wallPlaced && attempts < 100) {
+                    const row = Math.floor(Math.random() * size);
+                    const col = Math.floor(Math.random() * size);
+                    if (grid[row][col] === '.') {
+                        // Check if this is near the laser start path
+                        const isProtected = isNearStartPath(laserStart, row, col);
+                        if (!isProtected) {
+                            grid[row][col] = '█';
+                            wallPlaced = true;
+                        }
+                    }
+                    attempts++;
+                }
+            }
+            
+            // Add traps based on difficulty (also skip protected tiles)
+            const trapCount = gameState.difficulty === 'easy' ? 1 : gameState.difficulty === 'medium' ? 2 : 4;
+            for (let i = 0; i < trapCount; i++) {
+                let trapPlaced = false;
+                let attempts = 0;
+                while (!trapPlaced && attempts < 100) {
+                    const row = Math.floor(Math.random() * size);
+                    const col = Math.floor(Math.random() * size);
+                    if (grid[row][col] === '.') {
+                        const isProtected = isNearStartPath(laserStart, row, col);
+                        if (!isProtected) {
+                            grid[row][col] = '✖';
+                            trapPlaced = true;
+                        }
+                    }
+                    attempts++;
+                }
+            }
+            
+            return { grid, laserStart };
+        }
+
+        function isNearStartPath(laserStart, row, col) {
+            // Check if this position is in the first 2 tiles of laser path
+            let currentRow = laserStart.row;
+            let currentCol = laserStart.col;
+            for (let i = 0; i < 2; i++) {
+                const nextPos = getNextPosition(currentRow, currentCol, laserStart.direction);
+                if (nextPos.row === row && nextPos.col === col) {
+                    return true;
+                }
+                currentRow = nextPos.row;
+                currentCol = nextPos.col;
+            }
+            return false;
+        }
+
+        function placeMirror(row, col) {
+            if (!gameState.gameActive || gameState.isWon) return;
+            
+            const cell = document.querySelector(`[data-index="${row * gameState.gridSize + col}"]`);
+            const cellType = gameState.currentLevel.grid[row][col];
+            
+            if (['█', 'G', '✖', '→', '←', '↑', '↓'].includes(cellType)) return;
+            
+            if (cell.classList.contains('mirror')) {
+                cell.classList.remove('mirror');
+                cell.textContent = '';
+                gameState.currentLevel.grid[row][col] = '.';
+            } else {
+                cell.classList.add('mirror');
+                cell.textContent = '/';
+                gameState.currentLevel.grid[row][col] = '/';
+            }
+            
+            playSound(523, 0.1);
+            setTimeout(simulateLaser, 100);
+        }
+
+        function rotateMirror(row, col) {
+            if (!gameState.gameActive || gameState.isWon) return;
+            
+            const cell = document.querySelector(`[data-index="${row * gameState.gridSize + col}"]`);
+            const cellType = gameState.currentLevel.grid[row][col];
+            
+            if (!cell.classList.contains('mirror')) return;
+            
+            const newMirror = cellType === '/' ? '\\' : '/';
+            cell.textContent = newMirror;
+            gameState.currentLevel.grid[row][col] = newMirror;
+            
+            playSound(659, 0.1);
+            setTimeout(simulateLaser, 100);
+        }
+
+        function simulateLaser() {
+            if (!gameState.gameActive) return;
+            
+            clearBeam();
+            gameState.laserPath = [];
+            gameState.isWon = false;
+            
+            const start = gameState.currentLevel.laserStart;
+            let currentRow = start.row;
+            let currentCol = start.col;
+            let direction = start.direction;
+            
+            const visited = new Set();
+            const maxSteps = gameState.gridSize * gameState.gridSize * 2;
+            let steps = 0;
+            
+            // First pass: highlight all cells the laser will hit
+            const highlightPath = [];
+            while (steps < maxSteps) {
+                const posKey = `${currentRow}-${currentCol}-${direction}`;
+                if (visited.has(posKey)) break;
+                visited.add(posKey);
+                
+                // Move to next position
+                const nextPos = getNextPosition(currentRow, currentCol, direction);
+                if (!isValidPosition(nextPos.row, nextPos.col)) break;
+                
+                currentRow = nextPos.row;
+                currentCol = nextPos.col;
+                
+                const cellType = gameState.currentLevel.grid[currentRow][currentCol];
+                highlightPath.push({ row: currentRow, col: currentCol, direction });
+                
+                if (cellType === '█') {
+                    break;
+                } else if (cellType === 'G') {
+                    break;
+                } else if (cellType === '✖') {
+                    break;
+                } else if (cellType === '/' || cellType === '\\') {
+                    direction = reflectDirection(direction, cellType);
+                }
+                
+                steps++;
+            }
+            
+            // Second pass: animate the laser along the path
+            animateLaserPath(highlightPath, 0);
+        }
+
+        function animateLaserPath(path, index) {
+            if (index >= path.length) {
+                const lastCell = path[path.length - 1];
+                const cellType = gameState.currentLevel.grid[lastCell.row][lastCell.col];
+                
+                if (cellType === 'G') {
+                    gameState.isWon = true;
+                    setTimeout(() => {
+                        showWinner();
+                        playSound(880, 0.5);
+                        playSound(1100, 0.3, 'triangle');
+                    }, 300);
+                } else if (cellType === '✖') {
+                    gameState.gameActive = false;
+                    setTimeout(() => {
+                        showExplosion(lastCell.row, lastCell.col);
+                    }, 200);
+                }
+                return;
+            }
+            
+            const segment = path[index];
+            drawBeamSegment(segment.row, segment.col, segment.direction);
+            gameState.laserPath.push(segment);
+            
+            setTimeout(() => {
+                animateLaserPath(path, index + 1);
+            }, 100);
+        }
+
+        function getNextPosition(row, col, direction) {
+            switch (direction) {
+                case '→': return { row, col: col + 1 };
+                case '←': return { row, col: col - 1 };
+                case '↑': return { row: row - 1, col };
+                case '↓': return { row: row + 1, col };
+                default: return { row, col };
+            }
+        }
+
+        function isValidPosition(row, col) {
+            return row >= 0 && row < gameState.gridSize && col >= 0 && col < gameState.gridSize;
+        }
+
+        function reflectDirection(direction, mirror) {
+            if (mirror === '/') {
+                switch (direction) {
+                    case '→': return '↑';
+                    case '←': return '↓';
+                    case '↑': return '→';
+                    case '↓': return '←';
+                }
+            } else if (mirror === '\\') {
+                switch (direction) {
+                    case '→': return '↓';
+                    case '←': return '↑';
+                    case '↑': return '←';
+                    case '↓': return '→';
+                }
+            }
+            return direction;
+        }
+
+        function drawBeamSegment(row, col, direction) {
+            const cell = document.querySelector(`[data-index="${row * gameState.gridSize + col}"]`);
+            const beam = document.createElement('div');
+            beam.className = 'beam';
+            
+            if (direction === '→' || direction === '←') {
+                beam.classList.add('horizontal');
+            } else {
+                beam.classList.add('vertical');
+            }
+            
+            cell.appendChild(beam);
+        }
+
+        function clearBeam() {
+            document.querySelectorAll('.beam').forEach(beam => beam.remove());
+            document.querySelectorAll('.winner').forEach(winner => winner.remove());
+            document.querySelectorAll('.game-over').forEach(gameOver => gameOver.remove());
+        }
+
+        function showExplosion(row, col) {
+            const cell = document.querySelector(`[data-index="${row * gameState.gridSize + col}"]`);
+            const rect = cell.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            
+            createShardExplosion(x, y, 12);
+            cell.classList.add('glitch');
+            document.body.classList.add('flash');
+            
+            playSound(220, 0.3, 'sawtooth');
+            playSound(110, 0.5, 'square');
+            
+            setTimeout(() => {
+                cell.classList.remove('glitch');
+                document.body.classList.remove('flash');
+                showGameOver();
+            }, 600);
+        }
+
+        function showGameOver() {
+            const gameOver = document.createElement('div');
+            gameOver.className = 'game-over';
+            gameOver.textContent = 'GAME OVER';
+            document.body.appendChild(gameOver);
+            
+            setTimeout(() => {
+                gameOver.remove();
+                setTimeout(backToMenu, 1000);
+            }, 2000);
+        }
+
+        function showWinner() {
+            const winner = document.createElement('div');
+            winner.className = 'winner';
+            winner.textContent = 'TARGET ACQUIRED';
+            document.body.appendChild(winner);
+            
+            setTimeout(() => {
+                winner.remove();
+                setTimeout(generateLevel, 1000);
+            }, 2000);
+        }
+
+        function updateStatus(text) {
+            document.getElementById('status').textContent = text;
+        }
+
+        function restartLevel() {
+            if (!gameState.gameActive) return;
+            clearBeam();
+            generateLevel();
+            playSound(440, 0.2);
+        }
+
+        // Initialize the game
+        createParticles();
+        
+        // Add start button event listener
+        document.getElementById('startBtn').addEventListener('click', function() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('menu').style.display = 'flex';
+        });
+        
+        // Resume audio context on user interaction
+        document.addEventListener('click', () => {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }, { once: true });
+
+        // Prevent zoom on mobile
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>

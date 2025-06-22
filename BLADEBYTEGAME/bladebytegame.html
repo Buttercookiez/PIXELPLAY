@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLADEBYTE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Courier+New&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000000;
+            color: #ffffff;
+            font-family: 'Orbitron', monospace;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            position: relative;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        /* New start screen styles */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #instructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+            font-family: 'Courier New', monospace;
+            max-width: 300px;
+        }
+        
+        .pixel-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.03;
+            background-image: 
+                linear-gradient(90deg, #ffffff 1px, transparent 1px),
+                linear-gradient(#ffffff 1px, transparent 1px);
+            background-size: 4px 4px;
+            z-index: 1;
+        }
+        
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                transparent 50%,
+                rgba(255, 255, 255, 0.02) 50%
+            );
+            background-size: 100% 2px;
+            z-index: 3;
+            pointer-events: none;
+        }
+        
+        canvas {
+            display: block;
+            background: transparent;
+            cursor: crosshair;
+            position: relative;
+            z-index: 2;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+        
+        .ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            background: #000000;
+            color: #ffffff;
+            padding: 4px 8px;
+            border: 1px solid #ffffff;
+        }
+        
+        .level {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 12px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            background: #000000;
+            color: #ffffff;
+            padding: 4px 8px;
+            border: 1px solid #ffffff;
+        }
+        
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            display: none;
+            pointer-events: auto;
+            background: #000000;
+            color: #ffffff;
+            padding: 20px;
+            border: 1px solid #ffffff;
+        }
+        
+        .restart-btn {
+            background: #ffffff;
+            color: #000000;
+            border: 1px solid #000000;
+            padding: 8px 16px;
+            font-family: 'Orbitron', monospace;
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+        
+        .restart-btn:hover {
+            background: #000000;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+        }
+        
+        .knives-left {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 400;
+            letter-spacing: 1px;
+            background: #000000;
+            color: #ffffff;
+            padding: 4px 8px;
+            border: 1px solid #ffffff;
+        }
+        
+        .knife-selector {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            pointer-events: auto;
+        }
+        
+        .knife-option {
+            width: 32px;
+            height: 32px;
+            background: #000000;
+            border: 1px solid #ffffff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            position: relative;
+            font-size: 12px;
+        }
+        
+        .knife-option:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+        
+        .knife-option.selected {
+            background: #ffffff;
+            color: #000000;
+        }
+        
+        .flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+            transition: opacity 0.1s;
+        }
+
+        @media (max-width: 768px) {
+            .score, .level {
+                font-size: 10px;
+                top: 15px;
+                padding: 3px 6px;
+            }
+            .score { left: 15px; }
+            .level { right: 15px; }
+            .game-over { font-size: 14px; padding: 15px; }
+            .knives-left { 
+                font-size: 8px; 
+                bottom: 70px;
+                padding: 3px 6px;
+            }
+            .knife-selector { bottom: 20px; }
+            .knife-option { width: 28px; height: 28px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- New start screen -->
+    <div id="startScreen">
+        <h1 id="gameTitle">BLADEBYTE</h1>
+        <button id="startBtn">Start</button>
+        <div id="instructions">
+            Click or press SPACE to throw knives<br>
+            Hit the rotating target to score points<br>
+            Avoid hitting other knives
+        </div>
+    </div>
+
+    <div class="pixel-grid"></div>
+    <div class="scanlines"></div>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div class="ui">
+        <div class="score">SCORE: <span id="scoreValue">000</span></div>
+        <div class="level">LEVEL: <span id="levelValue">01</span></div>
+        <div class="knives-left">KNIVES: <span id="knivesValue">3</span></div>
+        
+        <div class="knife-selector">
+            <div class="knife-option selected" data-knife="classic" title="Classic Knife">▲</div>
+            <div class="knife-option" data-knife="dagger" title="Dagger">♦</div>
+            <div class="knife-option" data-knife="shuriken" title="Shuriken">✦</div>
+            <div class="knife-option" data-knife="sword" title="Mini Sword">▼</div>
+        </div>
+        
+        <div class="game-over" id="gameOver">
+            <div>GAME OVER</div>
+            <div style="font-size: 12px; margin: 8px 0;">FINAL SCORE: <span id="finalScore">000</span></div>
+            <button class="restart-btn" onclick="restartGame()">RESTART</button>
+        </div>
+    </div>
+    
+    <div class="flash" id="flash"></div>
+    
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('scoreValue');
+        const levelEl = document.getElementById('levelValue');
+        const knivesEl = document.getElementById('knivesValue');
+        const gameOverEl = document.getElementById('gameOver');
+        const finalScoreEl = document.getElementById('finalScore');
+        const flashEl = document.getElementById('flash');
+        
+        // Disable anti-aliasing for pixelated look
+        ctx.imageSmoothingEnabled = false;
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.mozImageSmoothingEnabled = false;
+        ctx.msImageSmoothingEnabled = false;
+        
+        let selectedKnifeType = 'classic';
+        let gameState = {
+            score: 0,
+            level: 1,
+            knivesLeft: 3,
+            gameOver: false,
+            targetAngle: 0,
+            targetSpeed: 0.8,
+            targetDirection: 1,
+            stuckKnives: [],
+            flyingKnife: null,
+            targetRadius: 60,
+            canThrow: true,
+            shards: [],
+            backgroundElements: [],
+            hitEffects: []
+        };
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            generateBackgroundElements();
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Generate background elements
+        function generateBackgroundElements() {
+            gameState.backgroundElements = [];
+            const numElements = 50;
+            
+            for (let i = 0; i < numElements; i++) {
+                gameState.backgroundElements.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    type: Math.random() < 0.3 ? 'cross' : (Math.random() < 0.5 ? 'dot' : 'line'),
+                    size: Math.random() * 3 + 1,
+                    opacity: Math.random() * 0.1 + 0.02,
+                    angle: Math.random() * Math.PI * 2,
+                    speed: Math.random() * 0.5 + 0.1
+                });
+            }
+        }
+        
+        // Pixelated drawing helper
+        function drawPixelRect(x, y, width, height, fillStyle) {
+            ctx.fillStyle = fillStyle;
+            ctx.fillRect(Math.floor(x), Math.floor(y), width, height);
+        }
+        
+        class HitEffect {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 5;
+                this.life = 1.0;
+                this.decay = 0.05;
+            }
+            
+            update() {
+                this.life -= this.decay;
+                this.radius += 0.5;
+                return this.life > 0;
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life * 0.7;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+        
+        class Shard {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8 - Math.random() * 3;
+                this.size = Math.random() * 3 + 1;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.02 + 0.01;
+                this.angle = Math.random() * Math.PI * 2;
+                this.spin = (Math.random() - 0.5) * 0.3;
+                this.gravity = 0.15;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.angle += this.spin;
+                this.life -= this.decay;
+                
+                // Slow down horizontal movement
+                this.vx *= 0.98;
+            }
+            
+            draw() {
+                if (this.life <= 0) return;
+                
+                ctx.save();
+                ctx.globalAlpha = this.life * 0.8;
+                ctx.translate(Math.floor(this.x), Math.floor(this.y));
+                ctx.rotate(this.angle);
+                
+                const size = Math.floor(this.size);
+                drawPixelRect(-size/2, -size/2, size, size, '#ffffff');
+                
+                ctx.restore();
+            }
+            
+            isDead() {
+                return this.life <= 0;
+            }
+        }
+        
+        class Knife {
+            constructor(x, y, flying = true, type = 'classic') {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.width = flying ? 6 : 4; // Thinner when stuck
+                this.height = flying ? 24 : 20; // Slightly shorter when stuck
+                this.speed = flying ? 8 : 0;
+                this.angle = 0;
+                this.flying = flying;
+                this.stuck = false;
+                this.stuckAngle = 0;
+                this.stuckDistance = 0;
+                this.rotationOffset = 0;
+                this.staticStick = false;
+                this.staticX = 0;
+                this.staticY = 0;
+                this.staticAngle = 0;
+            }
+            
+            update() {
+                if (this.flying) {
+                    this.y -= this.speed;
+                } else if (this.stuck) {
+                    if (this.staticStick) {
+                        // Knives that stick straight (like hitting a log) - don't rotate with target
+                        this.x = this.staticX;
+                        this.y = this.staticY;
+                        this.angle = this.staticAngle;
+                    } else {
+                        // Only shuriken rotates with target
+                        const currentTargetAngle = gameState.targetAngle;
+                        const finalAngle = currentTargetAngle + this.stuckAngle;
+                        
+                        const centerX = canvas.width / 2;
+                        const centerY = canvas.height / 2;
+                        
+                        this.x = centerX + Math.cos(finalAngle) * this.stuckDistance;
+                        this.y = centerY + Math.sin(finalAngle) * this.stuckDistance;
+                        
+                        this.angle = finalAngle + Math.PI + this.rotationOffset;
+                    }
+                }
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.translate(Math.floor(this.x), Math.floor(this.y));
+                ctx.rotate(this.angle);
+                
+                switch(this.type) {
+                    case 'classic':
+                        this.drawClassicPixel();
+                        break;
+                    case 'dagger':
+                        this.drawDaggerPixel();
+                        break;
+                    case 'shuriken':
+                        this.drawShurikenPixel();
+                        break;
+                    case 'sword':
+                        this.drawSwordPixel();
+                        break;
+                }
+                
+                ctx.restore();
+            }
+            
+            drawClassicPixel() {
+                if (this.flying) {
+                    // Flying knife is thicker
+                    drawPixelRect(-2, -16, 4, 2, '#ffffff'); // tip
+                    drawPixelRect(-3, -14, 6, 16, '#ffffff'); // blade
+                    drawPixelRect(-1, -12, 2, 12, '#000000'); // blade center line
+                    drawPixelRect(-2, 2, 4, 10, '#ffffff'); // handle outline
+                    drawPixelRect(-1, 3, 2, 8, '#000000'); // handle center
+                } else {
+                    // Stuck knife is thinner
+                    drawPixelRect(-1, -14, 2, 2, '#ffffff'); // tip
+                    drawPixelRect(-2, -12, 4, 14, '#ffffff'); // blade
+                    drawPixelRect(-1, -10, 2, 10, '#000000'); // blade center line
+                    drawPixelRect(-1, 2, 2, 8, '#ffffff'); // handle outline
+                    drawPixelRect(0, 3, 1, 6, '#000000'); // handle center
+                }
+            }
+            
+            drawDaggerPixel() {
+                if (this.flying) {
+                    drawPixelRect(-1, -16, 2, 2, '#ffffff'); // tip
+                    drawPixelRect(-2, -14, 4, 14, '#ffffff'); // blade
+                    drawPixelRect(-4, 0, 8, 2, '#ffffff'); // cross guard
+                    drawPixelRect(-2, 2, 4, 8, '#ffffff'); // handle outline
+                    drawPixelRect(-1, 3, 2, 6, '#000000'); // handle center
+                } else {
+                    drawPixelRect(0, -14, 1, 2, '#ffffff'); // tip
+                    drawPixelRect(-1, -12, 3, 12, '#ffffff'); // blade
+                    drawPixelRect(-2, 0, 5, 2, '#ffffff'); // cross guard
+                    drawPixelRect(-1, 2, 3, 6, '#ffffff'); // handle outline
+                    drawPixelRect(0, 3, 1, 4, '#000000'); // handle center
+                }
+            }
+            
+            drawShurikenPixel() {
+                // Shuriken stays the same size
+                drawPixelRect(-2, -2, 4, 4, '#ffffff'); // center
+                drawPixelRect(-1, -12, 2, 8, '#ffffff'); // top spike
+                drawPixelRect(-1, 4, 2, 8, '#ffffff'); // bottom spike
+                drawPixelRect(-12, -1, 8, 2, '#ffffff'); // left spike
+                drawPixelRect(4, -1, 8, 2, '#ffffff'); // right spike
+                // Inner black details
+                drawPixelRect(-1, -8, 2, 4, '#000000');
+                drawPixelRect(-1, 4, 2, 4, '#000000');
+                drawPixelRect(-8, -1, 4, 2, '#000000');
+                drawPixelRect(4, -1, 4, 2, '#000000');
+            }
+            
+            drawSwordPixel() {
+                if (this.flying) {
+                    drawPixelRect(-1, -18, 2, 2, '#ffffff'); // tip
+                    drawPixelRect(-2, -16, 4, 18, '#ffffff'); // blade
+                    drawPixelRect(-1, -14, 2, 14, '#000000'); // fuller
+                    drawPixelRect(-5, 2, 10, 2, '#ffffff'); // cross guard
+                    drawPixelRect(-2, 4, 4, 8, '#ffffff'); // handle outline
+                    drawPixelRect(-3, 12, 6, 3, '#ffffff'); // pommel
+                    drawPixelRect(-1, 5, 2, 6, '#000000'); // handle center
+                } else {
+                    drawPixelRect(0, -16, 1, 2, '#ffffff'); // tip
+                    drawPixelRect(-1, -14, 3, 16, '#ffffff'); // blade
+                    drawPixelRect(0, -12, 1, 12, '#000000'); // fuller
+                    drawPixelRect(-3, 2, 7, 2, '#ffffff'); // cross guard
+                    drawPixelRect(-1, 4, 3, 6, '#ffffff'); // handle outline
+                    drawPixelRect(-2, 10, 5, 2, '#ffffff'); // pommel
+                    drawPixelRect(0, 5, 1, 4, '#000000'); // handle center
+                }
+            }
+            
+            checkTargetCollision() {
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const distance = Math.sqrt((this.x - centerX) ** 2 + (this.y - centerY) ** 2);
+                
+                return distance <= gameState.targetRadius + this.height/2;
+            }
+            
+            checkKnifeCollision() {
+                for (let knife of gameState.stuckKnives) {
+                    const dx = this.x - knife.x;
+                    const dy = this.y - knife.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 25) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+        
+        function drawBackground() {
+            // Draw animated background elements
+            gameState.backgroundElements.forEach(element => {
+                ctx.save();
+                ctx.globalAlpha = element.opacity;
+                ctx.translate(Math.floor(element.x), Math.floor(element.y));
+                ctx.rotate(element.angle);
+                
+                ctx.fillStyle = '#ffffff';
+                
+                switch(element.type) {
+                    case 'cross':
+                        const crossSize = Math.floor(element.size * 2);
+                        drawPixelRect(-crossSize/2, -1, crossSize, 2);
+                        drawPixelRect(-1, -crossSize/2, 2, crossSize);
+                        break;
+                    case 'dot':
+                        const dotSize = Math.floor(element.size);
+                        drawPixelRect(-dotSize/2, -dotSize/2, dotSize, dotSize);
+                        break;
+                    case 'line':
+                        const lineLength = Math.floor(element.size * 3);
+                        drawPixelRect(-lineLength/2, -1, lineLength, 2);
+                        break;
+                }
+                
+                ctx.restore();
+                
+                // Animate elements
+                element.angle += element.speed * 0.01;
+                element.y += element.speed * 0.2;
+                
+                // Reset position when off screen
+                if (element.y > canvas.height + 20) {
+                    element.y = -20;
+                    element.x = Math.random() * canvas.width;
+                }
+            });
+        }
+        
+        function createShards(x, y, count = 8) {
+            for (let i = 0; i < count; i++) {
+                gameState.shards.push(new Shard(x, y));
+            }
+        }
+        
+        function createHitEffect(x, y) {
+            gameState.hitEffects.push(new HitEffect(x, y));
+        }
+        
+        function updateShards() {
+            gameState.shards = gameState.shards.filter(shard => {
+                shard.update();
+                return !shard.isDead();
+            });
+        }
+        
+        function updateHitEffects() {
+            gameState.hitEffects = gameState.hitEffects.filter(effect => effect.update());
+        }
+        
+        function drawShards() {
+            gameState.shards.forEach(shard => shard.draw());
+        }
+        
+        function drawHitEffects() {
+            gameState.hitEffects.forEach(effect => effect.draw());
+        }
+        
+        function drawTarget() {
+            const centerX = Math.floor(canvas.width / 2);
+            const centerY = Math.floor(canvas.height / 2);
+            
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(gameState.targetAngle);
+            
+            // Pixelated target design - clean black and white
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(0, 0, gameState.targetRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // White rings
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, gameState.targetRadius - 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(0, 0, gameState.targetRadius - 16, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, gameState.targetRadius - 24, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.arc(0, 0, gameState.targetRadius - 32, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Center cross - pixelated
+            ctx.fillStyle = '#ffffff';
+            drawPixelRect(-2, -12, 4, 24); // vertical
+            drawPixelRect(-12, -2, 24, 4); // horizontal
+            
+            ctx.restore();
+        }
+        
+        function updateTarget() {
+            gameState.targetAngle += gameState.targetSpeed * gameState.targetDirection * 0.02;
+        }
+        
+        function throwKnife() {
+            if (!gameState.canThrow || gameState.knivesLeft <= 0 || gameState.gameOver) return;
+            
+            gameState.flyingKnife = new Knife(canvas.width / 2, canvas.height - 50, true, selectedKnifeType);
+            gameState.canThrow = false;
+            
+            playSound('throw');
+        }
+        
+        function updateGame() {
+            if (gameState.gameOver) return;
+            
+            updateTarget();
+            updateShards();
+            updateHitEffects();
+            
+            gameState.stuckKnives.forEach(knife => knife.update());
+            
+            if (gameState.flyingKnife) {
+                gameState.flyingKnife.update();
+                
+                if (gameState.flyingKnife.checkTargetCollision()) {
+                    if (gameState.flyingKnife.checkKnifeCollision()) {
+                        endGame();
+                        return;
+                    }
+                    
+                    const centerX = canvas.width / 2;
+                    const centerY = canvas.height / 2;
+                    const deltaX = gameState.flyingKnife.x - centerX;
+                    const deltaY = gameState.flyingKnife.y - centerY;
+                    const angleToKnife = Math.atan2(deltaY, deltaX);
+                    
+                    gameState.flyingKnife.stuckAngle = angleToKnife - gameState.targetAngle;
+                    gameState.flyingKnife.stuckDistance = gameState.targetRadius;
+                    gameState.flyingKnife.flying = false;
+                    gameState.flyingKnife.stuck = true;
+                    gameState.flyingKnife.rotationOffset = 0;
+                    
+                    // Make knife thinner when stuck
+                    gameState.flyingKnife.width = 4;
+                    gameState.flyingKnife.height = 20;
+                    
+                    gameState.flyingKnife.x = centerX + Math.cos(angleToKnife) * gameState.targetRadius;
+                    gameState.flyingKnife.y = centerY + Math.sin(angleToKnife) * gameState.targetRadius;
+                    gameState.flyingKnife.angle = angleToKnife + Math.PI;
+                    
+                    // Create visual effects
+                    createShards(gameState.flyingKnife.x, gameState.flyingKnife.y, 12);
+                    createHitEffect(gameState.flyingKnife.x, gameState.flyingKnife.y);
+                    
+                    gameState.stuckKnives.push(gameState.flyingKnife);
+                    gameState.flyingKnife = null;
+                    gameState.canThrow = true;
+                    
+                    gameState.score += 1;
+                    gameState.knivesLeft -= 1;
+                    
+                    playSound('hit');
+                    updateUI();
+                    
+                    if (gameState.knivesLeft <= 0) {
+                        completeLevel();
+                    }
+                }
+                
+                if (gameState.flyingKnife && gameState.flyingKnife.y < -50) {
+                    gameState.flyingKnife = null;
+                    gameState.canThrow = true;
+                }
+            }
+        }
+        
+        function completeLevel() {
+            gameState.score += 10;
+            gameState.level += 1;
+            gameState.knivesLeft = Math.min(3 + gameState.level - 1, 8);
+            gameState.stuckKnives = [];
+            
+            gameState.targetSpeed += 0.2;
+            if (gameState.level > 2 && Math.random() < 0.4) {
+                gameState.targetDirection *= -1;
+            }
+            
+            playSound('levelComplete');
+            flash();
+            updateUI();
+        }
+        
+        function endGame() {
+            gameState.gameOver = true;
+            playSound('gameOver');
+            finalScoreEl.textContent = gameState.score.toString().padStart(3, '0');
+            gameOverEl.style.display = 'block';
+        }
+        
+        function restartGame() {
+            gameState = {
+                score: 0,
+                level: 1,
+                knivesLeft: 3,
+                gameOver: false,
+                targetAngle: 0,
+                targetSpeed: 0.8,
+                targetDirection: 1,
+                stuckKnives: [],
+                flyingKnife: null,
+                targetRadius: 60,
+                canThrow: true,
+                shards: [],
+                backgroundElements: [],
+                hitEffects: []
+            };
+            
+            generateBackgroundElements();
+            gameOverEl.style.display = 'none';
+            updateUI();
+        }
+        
+        function updateUI() {
+            scoreEl.textContent = gameState.score.toString().padStart(3, '0');
+            levelEl.textContent = gameState.level.toString().padStart(2, '0');
+            knivesEl.textContent = gameState.knivesLeft.toString();
+        }
+        
+        function flash() {
+            flashEl.style.opacity = '0.5';
+            setTimeout(() => {
+                flashEl.style.opacity = '0';
+            }, 100);
+        }
+        
+        function playSound(type) {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'square'; // More retro/pixelated sound
+            
+            switch(type) {
+                case 'throw':
+                    oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'hit':
+                    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.1);
+                    break;
+                case 'gameOver':
+                    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.5);
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.5);
+                    break;
+                case 'levelComplete':
+                    oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+                    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+                    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
+                   gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    oscillator.start();
+                    oscillator.stop(audioCtx.currentTime + 0.3);
+                    break;
+            }
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBackground();
+            drawTarget();
+            drawShards();
+            drawHitEffects();
+            
+            gameState.stuckKnives.forEach(knife => knife.draw());
+            
+            if (gameState.flyingKnife) {
+                gameState.flyingKnife.draw();
+            }
+        }
+        
+        function gameLoop() {
+            updateGame();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Event listeners
+        canvas.addEventListener('click', throwKnife);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            throwKnife();
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                throwKnife();
+            }
+        });
+        
+        // Knife selector
+        document.querySelectorAll('.knife-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.knife-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedKnifeType = option.dataset.knife;
+            });
+        });
+        
+        // Prevent context menu on touch devices
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        
+        // Start button event listener
+        document.getElementById('startBtn').addEventListener('click', () => {
+            document.getElementById('startScreen').style.display = 'none';
+            restartGame();
+        });
+        
+        // Initialize game
+        generateBackgroundElements();
+        updateUI();
+        gameLoop();
+    </script>
+</body>
+</html>

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CODE BREAKER: THE TERMINAL LOCK</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #ffffff;
+            overflow: hidden;
+            user-select: none;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        
+        /* New start screen styles (matches 2048 style) */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #gameTitle {
+            font-size: 3rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.5rem;
+            opacity: 0.9;
+            font-family: 'Courier New', monospace;
+        }
+
+        #startBtn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #startBtn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        #instructions {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.6;
+            font-weight: 300;
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* Original game styles below */
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            display: none;
+        }
+        
+        .game-screen {
+            text-align: center;
+            border: 2px solid #333;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(1px);
+            display: none;
+            max-width: 800px;
+            width: 90vw;
+            height: 90vh;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+        
+        .instructions {
+            font-size: 12px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #cccccc;
+            text-align: left;
+        }
+        
+        .btn {
+            background: transparent;
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            padding: 12px 24px;
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #ffffff;
+            color: #0a0a0a;
+            animation: flicker 0.3s ease-in-out;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .game-layout {
+            display: grid;
+            grid-template-columns: 1fr 200px;
+            gap: 20px;
+            height: 100%;
+        }
+        
+        .main-game {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .input-panel {
+            border: 1px dotted #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .input-slots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .slot {
+            width: 50px;
+            height: 60px;
+            border: 2px solid #ffffff;
+            background: transparent;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 24px;
+            text-align: center;
+            font-weight: 700;
+            outline: none;
+        }
+        
+        .slot:focus {
+            background: rgba(255, 255, 255, 0.1);
+            animation: pulse 1s infinite;
+        }
+        
+        .history-panel {
+            border: 1px solid #333;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .history-title {
+            font-size: 12px;
+            margin-bottom: 15px;
+            color: #cccccc;
+        }
+        
+        .guess-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #333;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .guess-numbers {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 8px;
+        }
+        
+        .feedback {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid #666;
+        }
+        
+        .dot.correct {
+            background: #ffffff;
+            border-color: #ffffff;
+        }
+        
+        .dot.position {
+            background: #666;
+            border-color: #666;
+        }
+        
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .status-panel {
+            border: 1px solid #333;
+            padding: 15px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .attempts {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px;
+            border: 2px solid #ffffff;
+            background: #0a0a0a;
+            font-size: 24px;
+            font-weight: 700;
+            z-index: 2000;
+            display: none;
+        }
+        
+        .message.win {
+            color: #ffffff;
+            animation: win-flicker 2s infinite;
+        }
+        
+        .message.lose {
+            color: #ffffff;
+            animation: error-shake 0.5s ease-in-out;
+        }
+        
+        /* Animations */
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes win-flicker {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.3; }
+        }
+        
+        @keyframes error-shake {
+            0%, 100% { transform: translate(-50%, -50%); }
+            25% { transform: translate(-48%, -50%); }
+            75% { transform: translate(-52%, -50%); }
+        }
+        
+        @keyframes glitch-shake {
+            0%, 100% { transform: translateX(0); }
+            10% { transform: translateX(-2px); }
+            20% { transform: translateX(2px); }
+            30% { transform: translateX(-2px); }
+            40% { transform: translateX(2px); }
+            50% { transform: translateX(-1px); }
+            60% { transform: translateX(1px); }
+            70% { transform: translateX(-1px); }
+            80% { transform: translateX(1px); }
+            90% { transform: translateX(-1px); }
+        }
+        
+        @keyframes shard-burst {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(1.5) rotate(180deg); opacity: 0; }
+        }
+        
+        .glitch-effect {
+            animation: glitch-shake 0.3s ease-in-out;
+        }
+        
+        .error-flash {
+            background: rgba(255, 0, 0, 0.1) !important;
+            animation: error-flash 0.3s ease-in-out;
+        }
+        
+        @keyframes error-flash {
+            0%, 100% { background: rgba(255, 0, 0, 0.1); }
+            50% { background: rgba(255, 0, 0, 0.3); }
+        }
+        
+        .sound-toggle {
+            margin-top: 20px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+            }
+            
+            .title {
+                font-size: 18px;
+            }
+            
+            .slot {
+                width: 40px;
+                height: 50px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- New start screen (matches 2048 style) -->
+    <div id="startScreen">
+        <h1 id="gameTitle">CODE BREAKER</h1>
+        <button id="startBtn">START</button>
+        <div id="instructions">
+            GUESS THE 4-DIGIT CODE<br>
+            WHITE DOT = RIGHT DIGIT, RIGHT SPOT<br>
+            GRAY DOT = RIGHT DIGIT, WRONG SPOT<br>
+            NO DOT = WRONG DIGIT
+        </div>
+    </div>
+
+    <!-- Original game HTML below -->
+    <div class="container" id="container">
+        <!-- Game Screen -->
+        <div class="game-screen" id="gameScreen">
+            <div class="game-layout">
+                <div class="main-game">
+                    <div class="input-panel">
+                        <div style="font-size: 14px; margin-bottom: 10px;">ENTER CODE SEQUENCE:</div>
+                        <div class="input-slots">
+                            <input type="text" class="slot" maxlength="1" id="slot0">
+                            <input type="text" class="slot" maxlength="1" id="slot1">
+                            <input type="text" class="slot" maxlength="1" id="slot2">
+                            <input type="text" class="slot" maxlength="1" id="slot3">
+                        </div>
+                        <button class="btn" onclick="submitGuess()">SUBMIT SEQUENCE</button>
+                    </div>
+                    
+                    <div class="history-panel">
+                        <div class="history-title">ATTEMPT HISTORY:</div>
+                        <div id="historyList"></div>
+                    </div>
+                </div>
+                
+                <div class="side-panel">
+                    <div class="status-panel">
+                        <div class="attempts" id="attemptsDisplay">ATTEMPTS: 0 / 10</div>
+                        <div style="font-size: 10px; color: #666;">UNAUTHORIZED ACCESS<br>WILL BE TRACED</div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="btn" onclick="restartGame()">RESTART</button>
+                        <button class="btn" onclick="backToMenu()">MAIN MENU</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Messages -->
+        <div class="message" id="messageBox"></div>
+    </div>
+    
+    <script>
+        // Game state
+        let secretCode = [];
+        let attempts = 0;
+        let maxAttempts = 10;
+        let gameActive = false;
+        let soundEnabled = true;
+        let guessHistory = [];
+        
+        // Audio context for sound effects
+        let audioContext;
+        
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        function playSound(frequency, duration, type = 'sine', volume = 0.1) {
+            if (!soundEnabled || !audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(volume, audioContext.currentTime + 0.01);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+        
+        function playGlitchSound() {
+            if (!soundEnabled) return;
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    playSound(Math.random() * 200 + 100, 0.1, 'sawtooth', 0.05);
+                }, i * 50);
+            }
+        }
+        
+        function playWinSound() {
+            if (!soundEnabled) return;
+            const notes = [440, 554, 659, 880];
+            notes.forEach((note, i) => {
+                setTimeout(() => {
+                    playSound(note, 0.3, 'sine', 0.1);
+                }, i * 100);
+            });
+        }
+        
+        function generateSecretCode() {
+            const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+            secretCode = [];
+            
+            for (let i = 0; i < 4; i++) {
+                const randomIndex = Math.floor(Math.random() * digits.length);
+                secretCode.push(digits[randomIndex]);
+                digits.splice(randomIndex, 1);
+            }
+            
+            console.log('Secret code (for testing):', secretCode);
+        }
+        
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('container').style.display = 'flex';
+            document.getElementById('gameScreen').style.display = 'block';
+            
+            initAudio();
+            generateSecretCode();
+            attempts = 0;
+            gameActive = true;
+            guessHistory = [];
+            
+            updateAttemptsDisplay();
+            clearHistory();
+            clearSlots();
+            
+            // Focus first slot
+            document.getElementById('slot0').focus();
+        }
+        
+        function setupSlotNavigation() {
+            const slots = document.querySelectorAll('.slot');
+            
+            slots.forEach((slot, index) => {
+                slot.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    
+                    // Only allow digits
+                    if (!/^\d$/.test(value)) {
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // Move to next slot
+                    if (value && index < 3) {
+                        slots[index + 1].focus();
+                    }
+                    
+                    playSound(800, 0.1);
+                });
+                
+                slot.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !slot.value && index > 0) {
+                        slots[index - 1].focus();
+                    } else if (e.key === 'Enter') {
+                        submitGuess();
+                    }
+                });
+            });
+        }
+        
+        function submitGuess() {
+            if (!gameActive) return;
+            
+            const guess = [];
+            const slots = document.querySelectorAll('.slot');
+            
+            // Collect guess
+            for (let i = 0; i < 4; i++) {
+                const value = slots[i].value;
+                if (!value || !/^\d$/.test(value)) {
+                    showError('INCOMPLETE SEQUENCE');
+                    return;
+                }
+                guess.push(parseInt(value));
+            }
+            
+            // Check for duplicates
+            if (new Set(guess).size !== 4) {
+                showError('DUPLICATE DIGITS DETECTED');
+                return;
+            }
+            
+            attempts++;
+            playSound(400, 0.2);
+            
+            const feedback = calculateFeedback(guess);
+            addToHistory(guess, feedback);
+            
+            if (feedback.correct === 4) {
+                // Win!
+                gameActive = false;
+                showMessage('ACCESS GRANTED', 'win');
+                playWinSound();
+            } else if (attempts >= maxAttempts) {
+                // Lose!
+                gameActive = false;
+                showMessage(`LOCKED OUT<br>CODE WAS: ${secretCode.join('')}`, 'lose');
+                playGlitchSound();
+            } else {
+                // Continue playing
+                if (feedback.correct === 0 && feedback.position === 0) {
+                    // No matches - glitch effect
+                    document.querySelector('.input-panel').classList.add('glitch-effect');
+                    setTimeout(() => {
+                        document.querySelector('.input-panel').classList.remove('glitch-effect');
+                    }, 300);
+                    playGlitchSound();
+                }
+                
+                clearSlots();
+                document.getElementById('slot0').focus();
+            }
+            
+            updateAttemptsDisplay();
+        }
+        
+        function calculateFeedback(guess) {
+            let correct = 0; // Right digit, right position (white dots)
+            let position = 0; // Right digit, wrong position (gray dots)
+            
+            const secretUsed = new Array(4).fill(false);
+            const guessUsed = new Array(4).fill(false);
+            
+            // First pass: find correct positions
+            for (let i = 0; i < 4; i++) {
+                if (guess[i] === secretCode[i]) {
+                    correct++;
+                    secretUsed[i] = true;
+                    guessUsed[i] = true;
+                }
+            }
+            
+            // Second pass: find correct digits in wrong positions
+            for (let i = 0; i < 4; i++) {
+                if (!guessUsed[i]) {
+                    for (let j = 0; j < 4; j++) {
+                        if (!secretUsed[j] && guess[i] === secretCode[j]) {
+                            position++;
+                            secretUsed[j] = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            return { correct, position };
+        }
+        
+        function addToHistory(guess, feedback) {
+            const historyList = document.getElementById('historyList');
+            const row = document.createElement('div');
+            row.className = 'guess-row';
+            
+            const numbers = document.createElement('div');
+            numbers.className = 'guess-numbers';
+            numbers.textContent = guess.join('');
+            
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = 'feedback';
+            
+            // Add white dots for correct position
+            for (let i = 0; i < feedback.correct; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot correct';
+                feedbackDiv.appendChild(dot);
+            }
+            
+            // Add gray dots for correct digit, wrong position
+            for (let i = 0; i < feedback.position; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot position';
+                feedbackDiv.appendChild(dot);
+            }
+            
+            row.appendChild(numbers);
+            row.appendChild(feedbackDiv);
+            historyList.appendChild(row);
+            
+            // Scroll to bottom
+            historyList.scrollTop = historyList.scrollHeight;
+            
+            guessHistory.push({ guess: guess.slice(), feedback });
+        }
+        
+        function clearSlots() {
+            document.querySelectorAll('.slot').forEach(slot => {
+                slot.value = '';
+            });
+        }
+        
+        function clearHistory() {
+            document.getElementById('historyList').innerHTML = '';
+        }
+        
+        function updateAttemptsDisplay() {
+            const display = document.getElementById('attemptsDisplay');
+            display.textContent = `ATTEMPTS: ${attempts} / ${maxAttempts}`;
+            
+            if (attempts >= maxAttempts - 2) {
+                display.classList.add('error-flash');
+                setTimeout(() => {
+                    display.classList.remove('error-flash');
+                }, 300);
+            }
+        }
+        
+        function showMessage(text, type) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.innerHTML = text;
+            messageBox.className = `message ${type}`;
+            messageBox.style.display = 'block';
+            
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+        }
+        
+        function showError(text) {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = text;
+            messageBox.className = 'message lose';
+            messageBox.style.display = 'block';
+            
+            document.querySelector('.input-panel').classList.add('error-flash');
+            playGlitchSound();
+            
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+                document.querySelector('.input-panel').classList.remove('error-flash');
+            }, 1000);
+        }
+        
+        function restartGame() {
+            startGame();
+        }
+        
+        function backToMenu() {
+            document.getElementById('container').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+            gameActive = false;
+        }
+        
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.querySelector('.sound-toggle').textContent = `SOUND: ${soundEnabled ? 'ON' : 'OFF'}`;
+            
+            if (soundEnabled) {
+                initAudio();
+                playSound(440, 0.1);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add start button event listener
+            document.getElementById('startBtn').addEventListener('click', startGame);
+            
+            setupSlotNavigation();
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'r' && e.ctrlKey) {
+                    e.preventDefault();
+                    restartGame();
+                } else if (e.key === 'Escape') {
+                    backToMenu();
+                }
+            });
+        });
+
+        // Prevent zoom on mobile
+        document.addEventListener('touchstart', function(e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Handle visibility change to pause audio context
+        document.addEventListener('visibilitychange', function() {
+            if (audioContext) {
+                if (document.hidden) {
+                    audioContext.suspend();
+                } else {
+                    audioContext.resume();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
