@@ -431,29 +431,16 @@
         #bgMusic {
             display: none;
         }
-
-        /* Audio permission notice */
-        .audio-notice {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            border: 2px solid var(--border-color);
-            padding: 10px;
-            font-size: 10px;
-            z-index: 10000;
-            cursor: pointer;
-            text-align: center;
-            max-width: 80%;
-        }
     </style>
 </head>
+<audio id="bgMusic" loop>
+  <source src="/assets/audio/game-music.mp3" type="audio/mpeg">
+  
+</audio>
 <body>
-    <!-- Single Audio Element -->
-    <audio id="bgMusic" loop preload="auto">
-        <source src="/assets/audio/game-music.mp3" type="audio/mpeg">
+    <!-- Audio Element -->
+    <audio id="bgMusic" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-game-show-947.mp3" type="audio/mpeg">
     </audio>
 
     <!-- CRT Overlay -->
@@ -484,7 +471,9 @@
             <a href="#games" class="cta-button">PLAY</a>
         </header>
 
-        <!-- Game Grid -->         
+
+        <!-- Game Grid -->
+         
         <main class="game-grid" id="games">
             <!-- Memory -->
             <div class="game-card" data-game="memory" tabindex="0">
@@ -822,86 +811,45 @@
         let audioContext;
         let soundEnabled = true;
         let musicEnabled = true;
-        let audioInitialized = false;
+        let crtMode = false;
+        let invertMode = false;
+        let pureMode = false;
         const bgMusic = document.getElementById('bgMusic');
 
-        // Initialize audio - call this on first user interaction
+        // Initialize audio
         function initAudio() {
-            if (audioInitialized) return;
-            
-            try {
-                // Create audio context
+            if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // Resume if suspended (required for mobile)
-                if (audioContext.state === 'suspended') {
-                    audioContext.resume().then(() => {
-                        console.log('AudioContext resumed');
-                        startMusicIfEnabled();
-                    });
-                } else {
-                    startMusicIfEnabled();
-                }
-                
-                audioInitialized = true;
-            } catch (e) {
-                console.error("Audio initialization failed:", e);
             }
-        }
-
-        function startMusicIfEnabled() {
-            if (!musicEnabled) return;
-            
+            // Try to play music (will fail without user interaction)
             try {
                 bgMusic.volume = 0.3;
-                const playPromise = bgMusic.play();
-                
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.log("Audio play failed:", error);
-                        showAudioPermissionNotice();
-                    });
+                if (musicEnabled) {
+                    bgMusic.play().catch(e => console.log("Audio play failed:", e));
                 }
             } catch (e) {
-                console.log("Audio play error:", e);
-                showAudioPermissionNotice();
+                console.log("Audio initialization error:", e);
             }
-        }
-
-        function showAudioPermissionNotice() {
-            // Create a notice for the user to click to enable audio
-            const notice = document.createElement('div');
-            notice.className = 'audio-notice';
-            notice.textContent = 'Click here to enable sound';
-            notice.onclick = () => {
-                initAudio();
-                notice.remove();
-            };
-            document.body.appendChild(notice);
         }
 
         // Play retro beep sound
         function playBeep(frequency = 800, duration = 100) {
             if (!soundEnabled || !audioContext) return;
             
-            try {
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-                
-                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-                oscillator.type = 'square';
-                
-                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
-                
-                oscillator.start(audioContext.currentTime);
-                oscillator.stop(audioContext.currentTime + duration / 1000);
-            } catch (e) {
-                console.error("Error playing beep:", e);
-            }
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = 'square';
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration / 1000);
         }
 
         // Vibration feedback
@@ -953,9 +901,8 @@
         document.getElementById('musicToggle').addEventListener('click', function() {
             musicEnabled = !musicEnabled;
             this.classList.toggle('active', musicEnabled);
-            
             if (musicEnabled) {
-                startMusicIfEnabled();
+                bgMusic.play().catch(e => console.log("Audio play failed:", e));
             } else {
                 bgMusic.pause();
             }
@@ -1029,7 +976,6 @@
 
         // Initialize audio on first user interaction
         document.addEventListener('click', initAudio, { once: true });
-        document.addEventListener('keydown', initAudio, { once: true });
         document.addEventListener('touchstart', initAudio, { once: true });
 
         // Enhanced keyboard navigation
@@ -1048,6 +994,41 @@
                 focusableElements[prevIndex].focus();
                 playBeep(250, 25);
             }
+
+
+
+
+
+            // Audio variables
+let musicEnabled = true;
+const bgMusic = document.getElementById('bgMusic');
+
+// Initialize music (call this after user interaction)
+function initAudio() {
+  bgMusic.volume = 0.3; // Set volume to 30%
+  if (musicEnabled) {
+    bgMusic.play().catch(e => console.log("Audio requires user interaction first"));
+  }
+}
+
+// Music toggle handler
+document.getElementById('musicToggle').addEventListener('click', function() {
+  musicEnabled = !musicEnabled;
+  this.classList.toggle('active', musicEnabled);
+  if (musicEnabled) {
+    bgMusic.play();
+  } else {
+    bgMusic.pause();
+  }
+  playBeep(700, 100); // Optional sound feedback
+});
+
+// Start audio on first user interaction
+document.addEventListener('click', initAudio, { once: true });
+document.addEventListener('touchstart', initAudio, { once: true });
+
+
+
         });
     </script>
 </body>
