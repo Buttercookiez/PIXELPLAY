@@ -656,7 +656,7 @@
             <div class="instructions">
                 USE MIRRORS TO GUIDE THE BEAM.<br>
                 REACH THE GOAL. AVOID TRAPS.<br>
-                LEFT-CLICK TO PLACE MIRRORS. RIGHT-CLICK TO ROTATE.
+                CLICK TO PLACE/REMOVE MIRRORS. HOLD TO ROTATE.
             </div>
         </div>
         
@@ -687,9 +687,10 @@
             gameActive: true
         };
 
-        // Add touch tracking variables
-        let lastTouchTime = 0;
-        let lastTouchedCell = null;
+        // Mirror hold state
+        let isHoldingMirror = false;
+        let holdTimer = null;
+        const holdDuration = 500; // milliseconds to hold for reciprocation
 
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
@@ -819,33 +820,10 @@
                     cell.textContent = cellType;
                 }
                 
-                cell.addEventListener('click', () => placeMirror(row, col));
-                cell.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    rotateMirror(row, col);
-                });
-                
-                // Add touch event for mobile
+                cell.addEventListener('mousedown', () => placeMirror(row, col));
                 cell.addEventListener('touchstart', (e) => {
                     e.preventDefault();
-                    const currentTime = new Date().getTime();
-                    const timeDiff = currentTime - lastTouchTime;
-                    
-                    // Check if this is a double tap on the same cell
-                    if (timeDiff < 300 && lastTouchedCell === cell) {
-                        rotateMirror(row, col);
-                        lastTouchTime = 0;
-                        lastTouchedCell = null;
-                    } else {
-                        lastTouchTime = currentTime;
-                        lastTouchedCell = cell;
-                        // On single tap, place mirror (same as click)
-                        setTimeout(() => {
-                            if (new Date().getTime() - lastTouchTime >= 300) {
-                                placeMirror(row, col);
-                            }
-                        }, 300);
-                    }
+                    placeMirror(row, col);
                 });
                 
                 grid.appendChild(cell);
@@ -967,18 +945,36 @@
             
             if (['█', 'G', '✖', '→', '←', '↑', '↓'].includes(cellType)) return;
             
-            if (cell.classList.contains('mirror')) {
-                cell.classList.remove('mirror');
-                cell.textContent = '';
-                gameState.currentLevel.grid[row][col] = '.';
-            } else {
-                cell.classList.add('mirror');
-                cell.textContent = '/';
-                gameState.currentLevel.grid[row][col] = '/';
-            }
+            // Start hold timer for reciprocation
+            isHoldingMirror = false;
+            holdTimer = setTimeout(() => {
+                isHoldingMirror = true;
+                rotateMirror(row, col);
+            }, holdDuration);
             
-            playSound(523, 0.1);
-            setTimeout(simulateLaser, 100);
+            // Add mouseup/touchend event to clear timer if released before duration
+            const clearHold = () => {
+                clearTimeout(holdTimer);
+                if (!isHoldingMirror) {
+                    // Normal click behavior
+                    if (cell.classList.contains('mirror')) {
+                        cell.classList.remove('mirror');
+                        cell.textContent = '';
+                        gameState.currentLevel.grid[row][col] = '.';
+                    } else {
+                        cell.classList.add('mirror');
+                        cell.textContent = '/';
+                        gameState.currentLevel.grid[row][col] = '/';
+                    }
+                    playSound(523, 0.1);
+                    setTimeout(simulateLaser, 100);
+                }
+                document.removeEventListener('mouseup', clearHold);
+                document.removeEventListener('touchend', clearHold);
+            };
+            
+            document.addEventListener('mouseup', clearHold);
+            document.addEventListener('touchend', clearHold);
         }
 
         function rotateMirror(row, col) {

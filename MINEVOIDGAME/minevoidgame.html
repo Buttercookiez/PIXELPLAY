@@ -211,14 +211,17 @@
         
         .board-beginner { 
             grid-template-columns: repeat(9, minmax(30px, 1fr));
+            grid-template-rows: repeat(9, minmax(30px, 1fr));
         }
         
         .board-intermediate { 
             grid-template-columns: repeat(16, minmax(20px, 1fr));
+            grid-template-rows: repeat(16, minmax(20px, 1fr));
         }
         
         .board-expert { 
-            grid-template-columns: repeat(30, minmax(15px, 1fr));
+            grid-template-columns: repeat(16, minmax(15px, 1fr));
+            grid-template-rows: repeat(30, minmax(15px, 1fr));
         }
         
         .tile {
@@ -413,14 +416,19 @@
             
             .board-beginner { 
                 grid-template-columns: repeat(9, minmax(25px, 1fr));
+                grid-template-rows: repeat(9, minmax(25px, 1fr));
             }
             
             .board-intermediate { 
                 grid-template-columns: repeat(16, minmax(15px, 1fr));
+                grid-template-rows: repeat(16, minmax(15px, 1fr));
             }
             
             .board-expert { 
-                grid-template-columns: repeat(30, minmax(10px, 1fr));
+                grid-template-columns: repeat(16, minmax(10px, 1fr));
+                grid-template-rows: repeat(30, minmax(10px, 1fr));
+                max-height: 80vh;
+                overflow-y: auto;
             }
             
             .board-beginner .tile { 
@@ -684,7 +692,7 @@
                 this.levels = {
                     beginner: { width: 9, height: 9, mines: 10 },
                     intermediate: { width: 16, height: 16, mines: 40 },
-                    expert: { width: 30, height: 16, mines: 99 }
+                    expert: { width: 16, height: 30, mines: 99 }
                 };
                 this.currentLevel = 'beginner';
                 this.setLevel('beginner');

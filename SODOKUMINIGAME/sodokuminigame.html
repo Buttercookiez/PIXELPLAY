@@ -26,7 +26,7 @@
             user-select: none;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         /* New start screen styles (matches 2048) */
@@ -116,6 +116,8 @@
             min-height: 100vh;
             padding: 20px;
             width: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .game-screen {
@@ -166,6 +168,7 @@
             display: grid;
             gap: 1px;
             margin: 0 auto;
+            touch-action: manipulation;
         }
         
         .grid-4x4 { grid-template-columns: repeat(4, min(18vw, 50px)); }
@@ -255,7 +258,6 @@
             gap: 0.5rem;
         }
         
-        /* YOUR ORIGINAL BUTTON STYLES (unchanged) */
         button {
             background: #000;
             color: #fff;
@@ -325,6 +327,8 @@
             justify-content: center;
             z-index: 500;
             padding: 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .win-message, .lose-message {
@@ -410,12 +414,14 @@
             margin-top: 1rem;
             width: 100%;
             max-width: 300px;
+            touch-action: manipulation;
         }
         
         .number-pad button {
             aspect-ratio: 1/1;
             font-size: clamp(1rem, 4vw, 1.2rem);
             padding: 0;
+            min-height: 40px;
         }
         
         .number-pad button.clear {
@@ -788,6 +794,10 @@
                         }
                         
                         cell.addEventListener('click', () => this.selectCell(i, j));
+                        cell.addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            this.selectCell(i, j);
+                        }, { passive: false });
                         gridElement.appendChild(cell);
                     }
                 }
@@ -801,7 +811,11 @@
                 for (let i = 1; i <= this.size; i++) {
                     const button = document.createElement('button');
                     button.textContent = i;
-                    button.onclick = () => this.inputNumber(i);
+                    button.addEventListener('click', () => this.inputNumber(i));
+                    button.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.inputNumber(i);
+                    }, { passive: false });
                     numberPad.appendChild(button);
                 }
                 
@@ -809,7 +823,11 @@
                 const clearButton = document.createElement('button');
                 clearButton.textContent = 'CLEAR';
                 clearButton.className = 'clear';
-                clearButton.onclick = () => this.inputNumber(0);
+                clearButton.addEventListener('click', () => this.inputNumber(0));
+                clearButton.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.inputNumber(0);
+                }, { passive: false });
                 numberPad.appendChild(clearButton);
                 
                 // Adjust grid columns based on size
@@ -1117,51 +1135,6 @@
             }
         });
         
-        // Touch/mobile support
-        let touchStartX = 0;
-        let touchStartY = 0;
-        
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-        });
-        
-        document.addEventListener('touchend', (e) => {
-            if (!game.activeCell) return;
-            
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
-            const minSwipeDistance = 50;
-            
-            if (Math.abs(deltaX) > minSwipeDistance || Math.abs(deltaY) > minSwipeDistance) {
-                const { row, col } = game.activeCell;
-                let newRow = row;
-                let newCol = col;
-                
-                if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                    // Horizontal swipe
-                    if (deltaX > 0) {
-                        newCol = Math.min(game.size - 1, col + 1);
-                    } else {
-                        newCol = Math.max(0, col - 1);
-                    }
-                } else {
-                    // Vertical swipe
-                    if (deltaY > 0) {
-                        newRow = Math.min(game.size - 1, row + 1);
-                    } else {
-                        newRow = Math.max(0, row - 1);
-                    }
-                }
-                
-                if (newRow !== row || newCol !== col) {
-                    game.selectCell(newRow, newCol);
-                }
-            }
-        });
-        
         // Set default to 4x4 medium as requested
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('gridSize').value = '4';
@@ -1169,6 +1142,10 @@
             
             // Add event listener to start button
             document.getElementById('startBtn').addEventListener('click', startGame);
+            document.getElementById('startBtn').addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startGame();
+            }, { passive: false });
         });
     </script>
 </body>

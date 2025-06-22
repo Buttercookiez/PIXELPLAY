@@ -273,6 +273,7 @@
             transition: all 0.15s ease;
             user-select: none;
             position: relative;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .grid-cell.has-number {
@@ -986,62 +987,6 @@
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
         });
-
-        // Touch/swipe support for mobile
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchEndX = 0;
-        let touchEndY = 0;
-
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        });
-
-        document.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            touchEndY = e.changedTouches[0].screenY;
-            handleSwipe();
-        });
-
-        function handleSwipe() {
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
-            const minSwipeDistance = 50;
-            
-            if (Math.abs(deltaX) < minSwipeDistance && Math.abs(deltaY) < minSwipeDistance) {
-                return;
-            }
-            
-            let targetX = gameState.emptyPos.x;
-            let targetY = gameState.emptyPos.y;
-            
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                // Horizontal swipe
-                if (deltaX > 0) {
-                    // Swipe right - move empty space left (block moves right)
-                    targetX--;
-                } else {
-                    // Swipe left - move empty space right (block moves left)
-                    targetX++;
-                }
-            } else {
-                // Vertical swipe
-                if (deltaY > 0) {
-                    // Swipe down - move empty space up (block moves down)
-                    targetY--;
-                } else {
-                    // Swipe up - move empty space down (block moves up)
-                    targetY++;
-                }
-            }
-            
-            if (targetX >= 0 && targetX < 4 && targetY >= 0 && targetY < 4) {
-                if (canMove(targetX, targetY)) {
-                    makeMove(targetX, targetY);
-                }
-            }
-        }
 
         // Initialize the game when page loads
         document.addEventListener('DOMContentLoaded', () => {
