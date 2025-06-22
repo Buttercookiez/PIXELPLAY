@@ -687,6 +687,10 @@
             gameActive: true
         };
 
+        // Add touch tracking variables
+        let lastTouchTime = 0;
+        let lastTouchedCell = null;
+
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
         // Initialize floating particles
@@ -819,6 +823,29 @@
                 cell.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
                     rotateMirror(row, col);
+                });
+                
+                // Add touch event for mobile
+                cell.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    const currentTime = new Date().getTime();
+                    const timeDiff = currentTime - lastTouchTime;
+                    
+                    // Check if this is a double tap on the same cell
+                    if (timeDiff < 300 && lastTouchedCell === cell) {
+                        rotateMirror(row, col);
+                        lastTouchTime = 0;
+                        lastTouchedCell = null;
+                    } else {
+                        lastTouchTime = currentTime;
+                        lastTouchedCell = cell;
+                        // On single tap, place mirror (same as click)
+                        setTimeout(() => {
+                            if (new Date().getTime() - lastTouchTime >= 300) {
+                                placeMirror(row, col);
+                            }
+                        }, 300);
+                    }
                 });
                 
                 grid.appendChild(cell);

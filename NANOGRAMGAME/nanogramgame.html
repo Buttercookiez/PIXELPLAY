@@ -21,12 +21,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start; /* Changed from center to flex-start */
             padding: 20px;
             user-select: none;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         /* New start screen styles (matches 2048 style) */
@@ -43,6 +43,8 @@
             justify-content: center;
             align-items: center;
             z-index: 100;
+            overflow-y: auto; /* Added for scrollable content */
+            padding: 20px; /* Added padding */
         }
 
         #gameTitle {
@@ -93,11 +95,14 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
+            max-width: 100%;
+            padding-bottom: 20px; /* Added padding at bottom */
+            overflow-x: hidden;
         }
 
         .game-header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 20px; /* Reduced from 40px */
         }
         
         .game-title {
@@ -121,10 +126,12 @@
         
         .game-stats {
             display: flex;
-            gap: 40px;
-            margin-bottom: 30px;
+            gap: 20px; /* Reduced from 40px */
+            margin-bottom: 20px; /* Reduced from 30px */
             font-size: 0.85rem;
             font-weight: 400;
+            flex-wrap: wrap;
+            justify-content: center;
         }
         
         .stat {
@@ -132,6 +139,7 @@
             flex-direction: column;
             align-items: center;
             gap: 4px;
+            min-width: 80px; /* Added min-width */
         }
         
         .stat-label {
@@ -154,6 +162,8 @@
                 0 0 0 1px #222,
                 0 8px 32px rgba(0,0,0,0.8),
                 inset 0 1px 0 rgba(255,255,255,0.05);
+            max-width: 100%;
+            overflow: auto;
         }
         
         .grid-wrapper {
@@ -266,20 +276,22 @@
         }
         
         .controls {
-            margin-top: 40px;
+            margin-top: 20px; /* Reduced from 40px */
             display: flex;
-            gap: 15px;
+            gap: 10px; /* Reduced from 15px */
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
+            max-width: 100%;
         }
         
         .btn {
             background: #000;
             color: #fff;
             border: 1px solid #444;
-            padding: 12px 24px;
+            padding: 10px 16px; /* Reduced from 12px 24px */
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
+            font-size: 0.7rem; /* Reduced from 0.75rem */
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -315,6 +327,7 @@
         .level-selector {
             margin-bottom: 20px;
             text-align: center;
+            width: 100%;
         }
         
         .level-grid {
@@ -370,26 +383,29 @@
             flex-direction: column;
             z-index: 1000;
             backdrop-filter: blur(5px);
+            overflow-y: auto;
         }
         
         .win-content {
             text-align: center;
             animation: winFadeIn 0.8s ease;
-            padding: 40px;
+            padding: 20px; /* Reduced from 40px */
             border: 1px solid #333;
             background: #111;
+            margin: 20px;
+            max-width: 90%;
         }
         
         .win-title {
-            font-size: 2.5rem;
+            font-size: 2rem; /* Reduced from 2.5rem */
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* Reduced from 20px */
             letter-spacing: 4px;
         }
         
         .win-time {
             font-size: 1rem;
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* Reduced from 30px */
             opacity: 0.7;
         }
 
@@ -405,27 +421,30 @@
             justify-content: center;
             flex-direction: column;
             z-index: 1000;
+            overflow-y: auto;
         }
         
         .game-over-content {
             text-align: center;
             animation: winFadeIn 0.8s ease;
-            padding: 40px;
+            padding: 20px; /* Reduced from 40px */
             border: 1px solid #fff;
             background: #000;
             color: #fff;
+            margin: 20px;
+            max-width: 90%;
         }
         
         .game-over-title {
-            font-size: 2.5rem;
+            font-size: 2rem; /* Reduced from 2.5rem */
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* Reduced from 20px */
             letter-spacing: 4px;
         }
         
         .game-over-message {
             font-size: 1rem;
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* Reduced from 30px */
             opacity: 0.7;
         }
         
@@ -475,12 +494,33 @@
         
         @media (max-width: 768px) {
             .game-title { font-size: 2rem; letter-spacing: 4px; }
-            .game-stats { gap: 20px; flex-direction: row; }
-            .cell, .top-clue, .left-clue { width: 35px; height: 35px; }
+            .game-stats { gap: 15px; }
+            .cell, .top-clue, .left-clue { width: 30px; height: 30px; font-size: 0.6rem; }
+            .left-clues { width: 40px; }
             .game-grid { gap: 1px; }
-            .controls { gap: 10px; }
-            .btn { padding: 10px 16px; font-size: 0.7rem; }
+            .controls { gap: 8px; }
+            .btn { padding: 8px 12px; font-size: 0.65rem; }
             .level-grid { grid-template-columns: repeat(2, 1fr); }
+            .puzzle-container { padding: 10px; }
+            
+            /* Make sure the grid doesn't overflow */
+            .grid-wrapper {
+                max-width: 100%;
+                overflow: auto;
+            }
+            
+            /* Adjust font sizes for smaller screens */
+            .game-subtitle { font-size: 0.65rem; }
+            .stat-label { font-size: 0.6rem; }
+            .stat-value { font-size: 0.85rem; }
+        }
+
+        @media (max-width: 480px) {
+            .game-title { font-size: 1.5rem; }
+            .cell, .top-clue, .left-clue { width: 25px; height: 25px; font-size: 0.5rem; }
+            .left-clues { width: 35px; }
+            .btn { padding: 6px 10px; font-size: 0.6rem; }
+            .level-btn { padding: 10px 5px; font-size: 0.6rem; }
         }
     </style>
 </head>

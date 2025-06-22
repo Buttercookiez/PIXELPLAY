@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MINEVOID</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap');
@@ -11,6 +11,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
@@ -25,6 +26,7 @@
             padding: 15px;
             user-select: none;
             overflow-x: hidden;
+            touch-action: manipulation;
         }
 
         /* New start screen styles */
@@ -85,9 +87,10 @@
         }
         
         .game-container {
-            max-width: 1200px;
+            max-width: 100%;
             width: 100%;
             display: none; /* Initially hidden */
+            padding: 0 10px;
         }
         
         .game-header {
@@ -203,21 +206,19 @@
             margin: 0 auto 25px;
             position: relative;
             overflow: hidden;
+            width: 100%;
         }
         
         .board-beginner { 
-            grid-template-columns: repeat(9, 1fr);
-            max-width: 450px;
+            grid-template-columns: repeat(9, minmax(30px, 1fr));
         }
         
         .board-intermediate { 
-            grid-template-columns: repeat(16, 1fr);
-            max-width: 800px;
+            grid-template-columns: repeat(16, minmax(20px, 1fr));
         }
         
         .board-expert { 
-            grid-template-columns: repeat(30, 1fr);
-            max-width: 1200px;
+            grid-template-columns: repeat(30, minmax(15px, 1fr));
         }
         
         .tile {
@@ -233,26 +234,20 @@
             aspect-ratio: 1;
             position: relative;
             overflow: hidden;
-            min-width: 25px;
-            min-height: 25px;
+            min-width: 0;
+            min-height: 0;
         }
         
         .board-beginner .tile { 
-            font-size: clamp(1rem, 2.5vw, 1.4rem);
-            min-width: 40px;
-            min-height: 40px;
+            font-size: 1.2rem;
         }
         
         .board-intermediate .tile { 
-            font-size: clamp(0.8rem, 2vw, 1.1rem);
-            min-width: 35px;
-            min-height: 35px;
+            font-size: 1rem;
         }
         
         .board-expert .tile { 
-            font-size: clamp(0.7rem, 1.5vw, 1rem);
-            min-width: 30px;
-            min-height: 30px;
+            font-size: 0.8rem;
         }
         
         .tile.hidden {
@@ -366,31 +361,78 @@
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .game-container {
-                padding: 0 10px;
+                padding: 0 5px;
             }
             
-            .board-expert {
-                max-width: 95vw;
+            .game-title {
+                font-size: 1.8rem;
+                letter-spacing: 4px;
             }
             
             .level-selector {
-                gap: 6px;
+                gap: 5px;
             }
             
             .level-btn {
-                padding: 6px 12px;
+                padding: 6px 10px;
+                font-size: 0.7rem;
+            }
+            
+            .game-stats {
+                flex-wrap: wrap;
+            }
+            
+            .stat, .reset-btn {
+                flex: 1 1 100%;
+                margin-bottom: 5px;
+            }
+            
+            .board-beginner .tile { 
+                font-size: 1rem;
+            }
+            
+            .board-intermediate .tile { 
+                font-size: 0.9rem;
+            }
+            
+            .board-expert .tile { 
                 font-size: 0.7rem;
             }
         }
         
         @media (max-width: 480px) {
-            .game-stats {
-                flex-direction: column;
-                gap: 10px;
+            .game-title {
+                font-size: 1.5rem;
+                letter-spacing: 2px;
             }
             
-            .stat, .reset-btn {
-                width: 100%;
+            .level-btn {
+                padding: 5px 8px;
+                font-size: 0.6rem;
+            }
+            
+            .board-beginner { 
+                grid-template-columns: repeat(9, minmax(25px, 1fr));
+            }
+            
+            .board-intermediate { 
+                grid-template-columns: repeat(16, minmax(15px, 1fr));
+            }
+            
+            .board-expert { 
+                grid-template-columns: repeat(30, minmax(10px, 1fr));
+            }
+            
+            .board-beginner .tile { 
+                font-size: 0.9rem;
+            }
+            
+            .board-intermediate .tile { 
+                font-size: 0.8rem;
+            }
+            
+            .board-expert .tile { 
+                font-size: 0.6rem;
             }
         }
     </style>
@@ -475,57 +517,57 @@
             }
             
             createModernClick() {
-    return () => {
-        if (!this.enabled || !this.audioContext) return;
-        
-        // Create a more realistic mechanical click sound
-        const osc = this.audioContext.createOscillator();
-        const gainNode = this.audioContext.createGain();
-        const filter = this.audioContext.createBiquadFilter();
-        
-        // Create noise for the mechanical texture
-        const bufferSize = this.audioContext.sampleRate * 0.05;
-        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
-        const output = buffer.getChannelData(0);
-        
-        for (let i = 0; i < bufferSize; i++) {
-            const t = i / this.audioContext.sampleRate;
-            const decay = Math.exp(-t * 80); // Fast decay
-            const noise = (Math.random() * 2 - 1) * decay * 0.3;
-            output[i] = noise;
-        }
-        
-        const noiseSource = this.audioContext.createBufferSource();
-        const noiseGain = this.audioContext.createGain();
-        
-        noiseSource.buffer = buffer;
-        noiseSource.connect(noiseGain);
-        noiseGain.connect(this.audioContext.destination);
-        
-        // Sharp attack for mechanical click
-        noiseGain.gain.setValueAtTime(0.4, this.audioContext.currentTime);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.02);
-        
-        // Add a brief tone component for the "click"
-        osc.connect(filter);
-        filter.connect(gainNode);
-        gainNode.connect(this.audioContext.destination);
-        
-        osc.frequency.setValueAtTime(2000, this.audioContext.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(500, this.audioContext.currentTime + 0.01);
-        osc.type = 'square';
-        
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(3000, this.audioContext.currentTime);
-        
-        gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.015);
-        
-        noiseSource.start(this.audioContext.currentTime);
-        osc.start(this.audioContext.currentTime);
-        osc.stop(this.audioContext.currentTime + 0.015);
-    };
-}
+                return () => {
+                    if (!this.enabled || !this.audioContext) return;
+                    
+                    // Create a more realistic mechanical click sound
+                    const osc = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    const filter = this.audioContext.createBiquadFilter();
+                    
+                    // Create noise for the mechanical texture
+                    const bufferSize = this.audioContext.sampleRate * 0.05;
+                    const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                    const output = buffer.getChannelData(0);
+                    
+                    for (let i = 0; i < bufferSize; i++) {
+                        const t = i / this.audioContext.sampleRate;
+                        const decay = Math.exp(-t * 80); // Fast decay
+                        const noise = (Math.random() * 2 - 1) * decay * 0.3;
+                        output[i] = noise;
+                    }
+                    
+                    const noiseSource = this.audioContext.createBufferSource();
+                    const noiseGain = this.audioContext.createGain();
+                    
+                    noiseSource.buffer = buffer;
+                    noiseSource.connect(noiseGain);
+                    noiseGain.connect(this.audioContext.destination);
+                    
+                    // Sharp attack for mechanical click
+                    noiseGain.gain.setValueAtTime(0.4, this.audioContext.currentTime);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.02);
+                    
+                    // Add a brief tone component for the "click"
+                    osc.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    osc.frequency.setValueAtTime(2000, this.audioContext.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(500, this.audioContext.currentTime + 0.01);
+                    osc.type = 'square';
+                    
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(3000, this.audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 0.015);
+                    
+                    noiseSource.start(this.audioContext.currentTime);
+                    osc.start(this.audioContext.currentTime);
+                    osc.stop(this.audioContext.currentTime + 0.015);
+                };
+            }
             
             createFlagSound() {
                 return () => {
