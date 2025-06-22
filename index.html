@@ -433,14 +433,10 @@
         }
     </style>
 </head>
-<audio id="bgMusic" loop>
-  <source src="/assets/audio/game-music.mp3" type="audio/mpeg">
-  
-</audio>
 <body>
     <!-- Audio Element -->
     <audio id="bgMusic" loop>
-        <source src="https://assets.mixkit.co/music/preview/mixkit-game-show-947.mp3" type="audio/mpeg">
+        <source src="assets/audio/game-music.mp3" type="audio/mpeg">
     </audio>
 
     <!-- CRT Overlay -->
@@ -819,16 +815,31 @@
         // Initialize audio
         function initAudio() {
             if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log("Web Audio API not supported:", e);
+                    soundEnabled = false;
+                    document.getElementById('soundToggle').classList.remove('active');
+                }
             }
-            // Try to play music (will fail without user interaction)
+            
+            // Initialize music
             try {
                 bgMusic.volume = 0.3;
                 if (musicEnabled) {
-                    bgMusic.play().catch(e => console.log("Audio play failed:", e));
+                    const playPromise = bgMusic.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            console.log("Autoplay prevented:", error);
+                            // Show UI to let user start music
+                            document.getElementById('musicToggle').textContent = "▶ MUSIC";
+                        });
+                    }
                 }
             } catch (e) {
-                console.log("Audio initialization error:", e);
+                console.log("Music initialization error:", e);
             }
         }
 
@@ -836,26 +847,34 @@
         function playBeep(frequency = 800, duration = 100) {
             if (!soundEnabled || !audioContext) return;
             
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-            oscillator.type = 'square';
-            
-            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + duration / 1000);
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                oscillator.type = 'square';
+                
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+            } catch (e) {
+                console.log("Sound error:", e);
+            }
         }
 
         // Vibration feedback
         function vibrate(duration = 20) {
             if (navigator.vibrate) {
-                navigator.vibrate(duration);
+                try {
+                    navigator.vibrate(duration);
+                } catch (e) {
+                    console.log("Vibration not supported:", e);
+                }
             }
         }
 
@@ -901,11 +920,24 @@
         document.getElementById('musicToggle').addEventListener('click', function() {
             musicEnabled = !musicEnabled;
             this.classList.toggle('active', musicEnabled);
+            
             if (musicEnabled) {
-                bgMusic.play().catch(e => console.log("Audio play failed:", e));
+                this.textContent = "MUSIC";
+                const playPromise = bgMusic.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Playback prevented:", error);
+                        this.textContent = "▶ MUSIC";
+                        musicEnabled = false;
+                        this.classList.remove('active');
+                    });
+                }
             } else {
                 bgMusic.pause();
+                bgMusic.currentTime = 0;
             }
+            
             playBeep(700, 100);
             vibrate(20);
         });
@@ -994,41 +1026,6 @@
                 focusableElements[prevIndex].focus();
                 playBeep(250, 25);
             }
-
-
-
-
-
-            // Audio variables
-let musicEnabled = true;
-const bgMusic = document.getElementById('bgMusic');
-
-// Initialize music (call this after user interaction)
-function initAudio() {
-  bgMusic.volume = 0.3; // Set volume to 30%
-  if (musicEnabled) {
-    bgMusic.play().catch(e => console.log("Audio requires user interaction first"));
-  }
-}
-
-// Music toggle handler
-document.getElementById('musicToggle').addEventListener('click', function() {
-  musicEnabled = !musicEnabled;
-  this.classList.toggle('active', musicEnabled);
-  if (musicEnabled) {
-    bgMusic.play();
-  } else {
-    bgMusic.pause();
-  }
-  playBeep(700, 100); // Optional sound feedback
-});
-
-// Start audio on first user interaction
-document.addEventListener('click', initAudio, { once: true });
-document.addEventListener('touchstart', initAudio, { once: true });
-
-
-
         });
     </script>
 </body>
