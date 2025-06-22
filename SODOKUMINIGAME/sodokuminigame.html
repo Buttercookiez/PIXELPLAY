@@ -388,6 +388,11 @@
             100% { transform: scale(1) rotate(360deg); opacity: 0; }
         }
         
+        @keyframes flash-white {
+            0%, 100% { background: rgba(0, 0, 0, 0.9); }
+            50% { background: rgba(255, 255, 255, 0.9); }
+        }
+        
         .sparkle {
             position: absolute;
             width: 4px;
@@ -496,7 +501,6 @@
             NO REPEATS IN ROWS, COLUMNS OR BOXES<br>
             THREE MISTAKES AND YOU'RE OUT
         </div>
-        <div id="continueButtonContainer"></div>
     </div>
 
     <div class="container">
@@ -927,9 +931,15 @@
             handleLose() {
                 clearInterval(this.timerInterval);
                 document.getElementById('status').textContent = 'FAILED';
+                
+                // Flash white before showing lose screen
+                const loseScreen = document.getElementById('loseScreen');
+                loseScreen.style.display = 'flex';
+                loseScreen.style.animation = 'flash-white 0.5s';
+                
                 setTimeout(() => {
-                    document.getElementById('loseScreen').style.display = 'flex';
-                }, 1000);
+                    loseScreen.style.animation = '';
+                }, 500);
             }
             
             getHint() {
@@ -1152,118 +1162,13 @@
             }
         });
         
-        // Auto-save game state (using in-memory storage only)
-        let gameState = null;
-        
-        function saveGameState() {
-            if (document.getElementById('gameScreen').style.display !== 'none') {
-                gameState = {
-                    grid: JSON.parse(JSON.stringify(game.grid)),
-                    solution: JSON.parse(JSON.stringify(game.solution)),
-                    size: game.size,
-                    difficulty: game.difficulty,
-                    autoCheck: game.autoCheck,
-                    mistakes: game.mistakes,
-                    hintsUsed: game.hintsUsed,
-                    timeStarted: game.timeStarted
-                };
-                localStorage.setItem('sudokuGameState', JSON.stringify(gameState));
-            }
-        }
-        
-        function loadGameState() {
-            const savedState = localStorage.getItem('sudokuGameState');
-            if (savedState) {
-                gameState = JSON.parse(savedState);
-                
-                game.grid = gameState.grid;
-                game.solution = gameState.solution;
-                game.size = gameState.size;
-                game.difficulty = gameState.difficulty;
-                game.autoCheck = gameState.autoCheck;
-                game.mistakes = gameState.mistakes;
-                game.hintsUsed = gameState.hintsUsed;
-                game.timeStarted = gameState.timeStarted;
-                
-                // Update UI elements to match saved state
-                document.getElementById('gridSize').value = game.size;
-                document.getElementById('difficulty').value = game.difficulty;
-                document.getElementById('autoCheck').value = game.autoCheck.toString();
-                
-                game.renderGrid();
-                game.updateMistakeDisplay();
-                document.getElementById('hints').textContent = 3 - game.hintsUsed;
-                
-                if (game.timeStarted) {
-                    game.startTimer();
-                }
-                
-                return true;
-            }
-            return false;
-        }
-        
-        function addContinueOption() {
-            const savedState = localStorage.getItem('sudokuGameState');
-            if (savedState) {
-                const continueButton = document.createElement('button');
-                
-                continueButton.onclick = continueGame;
-                continueButton.style.marginTop = '1rem';
-                continueButton.style.background = 'transparent';
-                continueButton.style.color = '#fff';
-                continueButton.style.border = '1px solid rgba(255, 255, 255, 0.3)';
-                continueButton.style.padding = '0.5rem 1rem';
-                continueButton.style.fontFamily = "'Courier New', monospace";
-                continueButton.style.fontSize = '0.8rem';
-                continueButton.style.cursor = 'pointer';
-                continueButton.style.textTransform = 'uppercase';
-                continueButton.style.letterSpacing = '0.1rem';
-                continueButton.style.transition = 'all 0.3s ease';
-                continueButton.style.backdropFilter = 'blur(10px)';
-                continueButton.style.width = '100%';
-                continueButton.style.maxWidth = '200px';
-                
-                continueButton.addEventListener('mouseenter', () => {
-                    continueButton.style.background = 'rgba(255, 255, 255, 0.1)';
-                    continueButton.style.borderColor = 'rgba(255, 255, 255, 0.6)';
-                    continueButton.style.transform = 'translateY(-2px)';
-                });
-                
-                continueButton.addEventListener('mouseleave', () => {
-                    continueButton.style.background = 'transparent';
-                    continueButton.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                    continueButton.style.transform = 'translateY(0)';
-                });
-                
-                document.getElementById('startScreen').appendChild(continueButton);
-            }
-        }
-        
-        function continueGame() {
-            if (loadGameState()) {
-                document.getElementById('startScreen').style.display = 'none';
-                document.getElementById('gameScreen').style.display = 'block';
-            }
-        }
-        
-        // Auto-save every 5 seconds during gameplay
-        setInterval(saveGameState, 5000);
-        
-        // Save on page unload
-        window.addEventListener('beforeunload', saveGameState);
-        
-        // Check for saved game on load
+        // Set default to 4x4 medium as requested
         document.addEventListener('DOMContentLoaded', () => {
-            // Set default to 4x4 medium as requested
             document.getElementById('gridSize').value = '4';
             document.getElementById('difficulty').value = 'medium';
             
             // Add event listener to start button
             document.getElementById('startBtn').addEventListener('click', startGame);
-            
-            // Add continue option if game exists
-            addContinueOption();
         });
     </script>
 </body>
