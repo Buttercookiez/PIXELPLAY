@@ -17,17 +17,20 @@
             font-family: 'JetBrains Mono', 'Courier New', monospace;
             background: #0a0a0a;
             color: #ffffff;
+            overflow: hidden;
             user-select: none;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             touch-action: manipulation;
-            overflow: auto;
         }
         
-        /* Start screen styles */
+        /* New start screen styles (matches 2048 style) */
         #startScreen {
             position: fixed;
             top: 0;
@@ -41,18 +44,15 @@
             justify-content: center;
             align-items: center;
             z-index: 100;
-            padding: 20px;
-            box-sizing: border-box;
-            overflow: auto;
         }
 
         #gameTitle {
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: 300;
             color: #fff;
             margin-bottom: 2rem;
             text-align: center;
-            letter-spacing: 0.3rem;
+            letter-spacing: 0.5rem;
             opacity: 0.9;
             font-family: 'Courier New', monospace;
         }
@@ -69,7 +69,6 @@
             letter-spacing: 0.2rem;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
-            margin-bottom: 2rem;
         }
 
         #startBtn:hover {
@@ -79,46 +78,55 @@
         }
 
         #instructions {
+            margin-top: 2rem;
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: rgba(255, 255, 255, 0.6);
             line-height: 1.6;
             font-weight: 300;
             font-family: 'Courier New', monospace;
-            max-width: 90%;
         }
         
-        /* Game container styles */
+        /* Original game styles below */
         .container {
-            width: 100%;
-            min-height: 100vh;
-            display: none;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-            overflow-y: auto;
+            justify-content: center;
+            position: relative;
+            display: none;
         }
         
         .game-screen {
-            width: 100%;
-            max-width: 800px;
+            text-align: center;
             border: 2px solid #333;
-            padding: 20px;
+            padding: 40px;
             background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(1px);
             display: none;
-            flex-direction: column;
-            gap: 20px;
-            margin-bottom: 20px;
+            max-width: 800px;
+            width: 90vw;
+            height: 90vh;
+            padding: 20px;
+            overflow-y: auto;
         }
         
         .title {
-            font-size: 1.5rem;
+            font-size: 24px;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             letter-spacing: 2px;
             text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+        
+        .instructions {
+            font-size: 12px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #cccccc;
+            text-align: left;
         }
         
         .btn {
@@ -132,7 +140,6 @@
             text-transform: uppercase;
             transition: all 0.2s;
             margin: 5px;
-            width: 100%;
         }
         
         .btn:hover {
@@ -146,10 +153,10 @@
         }
         
         .game-layout {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr 200px;
             gap: 20px;
-            width: 100%;
+            height: 100%;
         }
         
         .main-game {
@@ -192,7 +199,7 @@
         .history-panel {
             border: 1px solid #333;
             padding: 15px;
-            height: 200px;
+            height: 300px;
             overflow-y: auto;
             background: rgba(255, 255, 255, 0.02);
         }
@@ -245,7 +252,6 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            width: 100%;
         }
         
         .status-panel {
@@ -264,7 +270,6 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            width: 100%;
         }
         
         .message {
@@ -279,8 +284,6 @@
             font-weight: 700;
             z-index: 2000;
             display: none;
-            max-width: 90%;
-            text-align: center;
         }
         
         .message.win {
@@ -342,49 +345,59 @@
             50% { background: rgba(255, 0, 0, 0.3); }
         }
         
-        /* Responsive */
-        @media (min-width: 768px) {
+        .sound-toggle {
+            margin-top: 20px;
+        }
+        
+        /* Responsive - ONLY MOBILE CHANGES */
+        @media (max-width: 768px) {
+            .game-screen {
+                height: 80vh;
+                max-height: none;
+                padding: 15px;
+                overflow-y: auto;
+            }
+            
+            .container {
+                overflow: auto;
+                height: auto;
+                padding: 10px;
+            }
+            
             .game-layout {
-                flex-direction: row;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+                height: auto;
             }
             
             .side-panel {
-                width: 250px;
+                margin-top: 20px;
             }
             
-            #gameTitle {
-                font-size: 3rem;
-                letter-spacing: 0.5rem;
+            .history-panel {
+                height: 200px;
             }
             
-            .btn {
-                width: auto;
-            }
-            
-            .controls {
-                width: auto;
-            }
-        }
-
-        @media (max-width: 480px) {
             .slot {
                 width: 40px;
                 height: 50px;
                 font-size: 20px;
             }
             
-            .history-panel {
-                height: 150px;
+            .controls {
+                flex-direction: row;
+                justify-content: center;
             }
             
-            #gameTitle {
-                font-size: 2rem;
+            .btn {
+                padding: 10px 15px;
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Start screen -->
+    <!-- New start screen (matches 2048 style) -->
     <div id="startScreen">
         <h1 id="gameTitle">CODE BREAKER</h1>
         <button id="startBtn">START</button>
@@ -396,7 +409,7 @@
         </div>
     </div>
 
-    <!-- Game container -->
+    <!-- Original game HTML below -->
     <div class="container" id="container">
         <!-- Game Screen -->
         <div class="game-screen" id="gameScreen">
@@ -510,7 +523,7 @@
         function startGame() {
             document.getElementById('startScreen').style.display = 'none';
             document.getElementById('container').style.display = 'flex';
-            document.getElementById('gameScreen').style.display = 'flex';
+            document.getElementById('gameScreen').style.display = 'block';
             
             initAudio();
             generateSecretCode();
@@ -738,6 +751,16 @@
             document.getElementById('gameScreen').style.display = 'none';
             document.getElementById('startScreen').style.display = 'flex';
             gameActive = false;
+        }
+        
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.querySelector('.sound-toggle').textContent = `SOUND: ${soundEnabled ? 'ON' : 'OFF'}`;
+            
+            if (soundEnabled) {
+                initAudio();
+                playSound(440, 0.1);
+            }
         }
         
         // Initialize
